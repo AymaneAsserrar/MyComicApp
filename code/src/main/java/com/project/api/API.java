@@ -1,5 +1,46 @@
 package com.project.api;
 
-public class API {
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
+import com.google.gson.Gson;
 
+import java.io.IOException;
+
+public class API {
+    private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
+    private static final String API_KEY = "e22bd0a8fe36c642d47999f6e61f8e252a717ec7";
+    private static OkHttpClient client;
+
+    // Initialisation du client HTTP avec un logging interceptor pour déboguer
+    static {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        client = new OkHttpClient.Builder()
+                .addInterceptor(logging)
+                .build();
+    }
+
+    // Méthode pour obtenir des comics populaires avec une limite configurable
+    public String getPopularComics(int limit) {
+        String endpoint = "issues/?api_key=" + API_KEY + "&format=json&sort=cover_date:desc&limit=" + limit;
+        String url = BASE_URL + endpoint;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", "ComicApp/1.0") // Ajout du User-Agent
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
+            }
+            return response.body() != null ? response.body().string() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // En cas d'erreur, retourne null
+        }
+    }
 }
