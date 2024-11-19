@@ -9,9 +9,9 @@ import java.util.List;
 public class RecommendationPanel extends JPanel {
 
     private static final long serialVersionUID = 2561771664627867791L;
-
 	public RecommendationPanel() {
-        setLayout(new GridLayout(0, 4, 10, 10)); // 4 columns, variable rows
+		int columns = 3;
+        setLayout(new GridLayout(0, columns, 10, 10));
         int limit = 12;
         // import recommendation list with API
         RecommendationController recommendationController = new RecommendationController();
