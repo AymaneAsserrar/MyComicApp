@@ -1,7 +1,8 @@
 package com.project.ui;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class SearchPanel extends JPanel {
@@ -9,28 +10,42 @@ public class SearchPanel extends JPanel {
 
     private JTextField searchField;
     private JButton searchButton;
-    private JTable resultsTable;
-    private DefaultTableModel tableModel;
-    private JScrollPane resultsScrollPane;
 
     public SearchPanel() {
-        setLayout(new BorderLayout());
+        setLayout(new FlowLayout(FlowLayout.CENTER));
 
-        // Search Bar Panel
-        JPanel searchBarPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // search field
         searchField = new JTextField(20);
-        searchButton = new JButton("Search");
-        searchBarPanel.add(new JLabel("Enter Title:"));
-        searchBarPanel.add(searchField);
-        searchBarPanel.add(searchButton);
-        add(searchBarPanel, BorderLayout.NORTH);
+        // search button
+        ImageIcon searchIcon = new ImageIcon(getClass().getResource("/search.png"));
+        Image searchImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH); // resizing the image
+        searchButton = new JButton(new ImageIcon(searchImage));
 
-        // Search Results Table (Initially hidden)
-        tableModel = new DefaultTableModel(new Object[]{"Title", "Publisher", "Release Date"}, 0);
-        resultsTable = new JTable(tableModel);
-        resultsScrollPane = new JScrollPane(resultsTable);
-        resultsScrollPane.setVisible(false);
-        add(resultsScrollPane, BorderLayout.CENTER);
+
+        // Disable the search button initially
+        searchButton.setEnabled(false);
+
+        // Add a listener to enable/disable the button based on text input
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                toggleSearchButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                toggleSearchButton();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                toggleSearchButton();
+            }
+        });
+
+        add(new JLabel("Enter Title:"));
+        add(searchField);
+        add(searchButton);
     }
 
     public JTextField getSearchField() {
@@ -41,37 +56,8 @@ public class SearchPanel extends JPanel {
         return searchButton;
     }
 
-    public boolean performSearch(String searchText) {
-        // Mock data for demonstration (Replace with API call)
-        Object[][] mockResults = {
-            {"Comic 1", "Publisher A", "2024-01-01"},
-            {"Comic 2", "Publisher B", "2024-01-05"},
-            {"Comic 3", "Publisher C", "2024-01-10"}
-        };
-
-        // Clear previous results
-        tableModel.setRowCount(0);
-
-        // Filter mock data (simulate search)
-        boolean resultsFound = false;
-        for (Object[] result : mockResults) {
-            if (result[0].toString().toLowerCase().contains(searchText.toLowerCase())) {
-                tableModel.addRow(result);
-                resultsFound = true;
-            }
-        }
-
-        // Show or hide the results table based on search results
-        resultsScrollPane.setVisible(resultsFound);
-
-        if (!resultsFound) {
-            JOptionPane.showMessageDialog(this, "No comics found for the title: " + searchText);
-        }
-
-        // Repaint and revalidate to update UI
-        revalidate();
-        repaint();
-
-        return resultsFound;
+    private void toggleSearchButton() {
+        // Enable the button only if there is text in the search field
+        searchButton.setEnabled(!searchField.getText().trim().isEmpty());
     }
 }

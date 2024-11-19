@@ -12,8 +12,8 @@ public class RecommendationPanel extends JPanel {
     private static final long serialVersionUID = 2561771664627867791L;
 
     public RecommendationPanel() {
-        setLayout(new GridLayout(0, 4, 10, 10)); // 4 columns, variable rows
-        int limit = 12;
+        setLayout(new GridLayout(0, 3, 5, 5)); // 3 columns and as many as rows needed
+        int limit = 12; // number of recommended comics displayed
 
         // Import recommendation list with API
         RecommendationController recommendationController = new RecommendationController();
@@ -42,9 +42,11 @@ public class RecommendationPanel extends JPanel {
             }
 
             JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER); // display of Comic name
+            
             comicPanel.add(logoLabel, BorderLayout.CENTER);
             comicPanel.add(titleLabel, BorderLayout.SOUTH);
             add(comicPanel);
         }
     }
+
 }
