@@ -25,7 +25,7 @@ public class API {
 
     // Méthode pour obtenir des comics populaires avec une limite configurable
     public String getPopularComics(int limit) {
-        String endpoint = "issues/?api_key=" + API_KEY + "&format=json&sort=cover_date:desc&limit=" + limit;
+        String endpoint = "volumes/?api_key=" + API_KEY + "&format=json&sort=date_added:desc&limit=" + limit;
         String url = BASE_URL + endpoint;
 
         Request request = new Request.Builder()
@@ -42,5 +42,5 @@ public class API {
             e.printStackTrace();
             return null; // En cas d'erreur, retourne null
         }
-    }
+}
 }
