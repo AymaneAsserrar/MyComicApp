@@ -1,5 +1,30 @@
 package com.project.ui;
 
-public class UiMain {
+import javax.swing.*;
+import java.awt.*;
 
+public class UiMain extends JFrame {
+    private static final long serialVersionUID = 2008701708169261499L;
+
+	public UiMain() {
+        setTitle("My Comic App");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(800, 600);
+        setLayout(new BorderLayout());
+
+        // Create and add the TitleSearchPanel
+        SearchPanel searchPanel = new SearchPanel();
+        add(searchPanel, BorderLayout.NORTH);
+
+        // Create and add the RecommendationPanel
+        RecommendationPanel recommendationPanel = new RecommendationPanel();
+        JScrollPane scrollPane = new JScrollPane(recommendationPanel); // Make recommendations scrollable
+        add(scrollPane, BorderLayout.CENTER);
+
+        setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(UiMain::new);
+    }
 }

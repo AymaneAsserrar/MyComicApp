@@ -1,7 +1,10 @@
 package com.project.ui;
+import com.project.controller.RecommendationController;
+import com.project.model.Comic;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class RecommendationPanel extends JPanel {
 
@@ -9,12 +12,14 @@ public class RecommendationPanel extends JPanel {
 
 	public RecommendationPanel() {
         setLayout(new GridLayout(0, 4, 10, 10)); // 4 columns, variable rows
-
-        // Mock Data for Recommendations (Replace with API data later)
-        for (int i = 1; i <= 12; i++) {
+        int limit = 12;
+        // import recommendation list with API
+        RecommendationController recommendationController = new RecommendationController();
+        List<Comic> recommendationList = recommendationController.getPopularComics(limit);
+        for (int i = 0; i < limit; i++) {
             JPanel comicPanel = new JPanel(new BorderLayout());
-            JLabel logoLabel = new JLabel(new ImageIcon("path_to_logo_" + i + ".png")); // Replace with actual image paths
-            JLabel titleLabel = new JLabel("Comic " + i, SwingConstants.CENTER);
+            JLabel logoLabel = new JLabel(new ImageIcon(recommendationList.get(i).getCoverImageUrl())); // display of Comic image
+            JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER); // display of Comic name
             comicPanel.add(logoLabel, BorderLayout.CENTER);
             comicPanel.add(titleLabel, BorderLayout.SOUTH);
             add(comicPanel);
