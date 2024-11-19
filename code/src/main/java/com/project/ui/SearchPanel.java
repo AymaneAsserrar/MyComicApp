@@ -1,8 +1,6 @@
 package com.project.ui;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class SearchPanel extends JPanel {
@@ -10,42 +8,40 @@ public class SearchPanel extends JPanel {
 
     private JTextField searchField;
     private JButton searchButton;
+    private JButton searchIconButton;
 
     public SearchPanel() {
-        setLayout(new FlowLayout(FlowLayout.CENTER));
+        setLayout(new BorderLayout()); // Utiliser BorderLayout pour gérer la position des éléments
 
         // search field
         searchField = new JTextField(20);
-        // search button
+        searchField.setVisible(false); // Masquer initialement le champ de recherche
+
+        // actual search button
+        searchButton = new JButton("Rechercher");
+        searchButton.setVisible(false); // Masquer initialement le bouton de recherche
+
+        // search icon button
         ImageIcon searchIcon = new ImageIcon(getClass().getResource("/search.png"));
-        Image searchImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH); // resizing the image
-        searchButton = new JButton(new ImageIcon(searchImage));
+        Image searchImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        searchIconButton = new JButton(new ImageIcon(searchImage));
+        searchIconButton.setPreferredSize(new Dimension(40, 40));
+        searchIconButton.setFocusPainted(false); // Supprimer la bordure de focus
+        searchIconButton.setBorderPainted(false); // Supprimer la bordure pour une apparence plus propre
 
-
-        // Disable the search button initially
-        searchButton.setEnabled(false);
-
-        // Add a listener to enable/disable the button based on text input
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                toggleSearchButton();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                toggleSearchButton();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                toggleSearchButton();
-            }
+        // Action de clic sur l'icône de recherche pour afficher/masquer le champ de recherche et le bouton
+        searchIconButton.addActionListener(e -> {
+            boolean isVisible = searchField.isVisible();
+            searchField.setVisible(!isVisible);
+            searchButton.setVisible(!isVisible);
+            revalidate();
+            repaint();
         });
 
-        add(new JLabel("Enter Title:"));
-        add(searchField);
-        add(searchButton);
+        // Ajouter les composants dans les différentes régions du BorderLayout
+        add(searchField, BorderLayout.CENTER); // Champ de recherche au centre
+        add(searchButton, BorderLayout.WEST); // Bouton de recherche à gauche du champ
+        add(searchIconButton, BorderLayout.EAST); // Icône de recherche toujours à droite
     }
 
     public JTextField getSearchField() {
@@ -54,10 +50,5 @@ public class SearchPanel extends JPanel {
 
     public JButton getSearchButton() {
         return searchButton;
-    }
-
-    private void toggleSearchButton() {
-        // Enable the button only if there is text in the search field
-        searchButton.setEnabled(!searchField.getText().trim().isEmpty());
     }
 }

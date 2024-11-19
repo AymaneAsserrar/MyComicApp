@@ -12,7 +12,14 @@ public class RecommendationPanel extends JPanel {
     private static final long serialVersionUID = 2561771664627867791L;
 
     public RecommendationPanel() {
-        setLayout(new GridLayout(0, 3, 5, 5)); // 3 columns and as many as rows needed
+        setLayout(new BorderLayout());
+
+        JLabel popularComicsLabel = new JLabel("Popular Comics", SwingConstants.CENTER);
+        popularComicsLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        add(popularComicsLabel, BorderLayout.NORTH);
+
+        JPanel comicsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5)); // 3 columns, as many rows as needed
+
         int limit = 12; // number of recommended comics displayed
 
         // Import recommendation list with API
@@ -24,29 +31,26 @@ public class RecommendationPanel extends JPanel {
             JLabel logoLabel;
 
             try {
-                // Charger l'image depuis l'URL du comic
                 String coverImageUrl = recommendationList.get(i).getCoverImageUrl();
                 if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
                     URL imageURL = new URL(coverImageUrl);
                     ImageIcon icon = new ImageIcon(imageURL);
-                    Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH); // Ajuster la taille selon les besoins
+                    Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
                     logoLabel = new JLabel(new ImageIcon(img));
                 } else {
-                    // Utiliser une image par défaut si aucune URL de couverture n'est disponible
-                    logoLabel = new JLabel(new ImageIcon("path/to/default/image.png")); // Assurez-vous que cette image existe
+                    logoLabel = new JLabel(new ImageIcon("path/to/default/image.png"));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                // En cas d'erreur lors du chargement de l'image, utiliser une image par défaut
-                logoLabel = new JLabel(new ImageIcon("path/to/default/image.png")); // Assurez-vous que cette image existe
+                logoLabel = new JLabel(new ImageIcon("path/to/default/image.png"));
             }
 
-            JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER); // display of Comic name
-            
+            JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER);
             comicPanel.add(logoLabel, BorderLayout.CENTER);
             comicPanel.add(titleLabel, BorderLayout.SOUTH);
-            add(comicPanel);
+            comicsGridPanel.add(comicPanel);
         }
-    }
 
+        add(comicsGridPanel, BorderLayout.CENTER);
+    }
 }
