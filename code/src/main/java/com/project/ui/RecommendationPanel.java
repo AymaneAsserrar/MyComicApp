@@ -38,13 +38,17 @@ public class RecommendationPanel extends JPanel {
                     Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
                     logoLabel = new JLabel(new ImageIcon(img));
                 } else {
-                    logoLabel = new JLabel(new ImageIcon("path/to/default/image.png"));
+                    ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
+                    Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+                    logoLabel = new JLabel(new ImageIcon(fallbackImg));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                logoLabel = new JLabel(new ImageIcon("path/to/default/image.png"));
+                ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
+                Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+                logoLabel = new JLabel(new ImageIcon(fallbackImg));
             }
-
+            
             JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER);
             comicPanel.add(logoLabel, BorderLayout.CENTER);
             comicPanel.add(titleLabel, BorderLayout.SOUTH);

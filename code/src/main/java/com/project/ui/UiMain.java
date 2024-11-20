@@ -12,6 +12,8 @@ public class UiMain extends JFrame {
     private SearchResultsPanel searchResultsPanel; // Panel for search results
     private JLabel homeLabel; // Label for home icon
     private CardLayout cardLayout; // to handle panel switching
+    private JPanel containerPanel;
+
 
     public UiMain() {
         setTitle("My Comic App");
@@ -22,10 +24,10 @@ public class UiMain extends JFrame {
         setLayout(new BorderLayout());
 
         // Load the home logo from resources
-        URL logoURL = getClass().getClassLoader().getResource("comic.png");
+        URL logoURL = getClass().getClassLoader().getResource("homeLogo.png");
         if (logoURL != null) {
             ImageIcon logoIcon = new ImageIcon(logoURL);
-            Image logoImage = logoIcon.getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH);
+            Image logoImage = logoIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             homeLabel = new JLabel(new ImageIcon(logoImage));
         } else {
             homeLabel = new JLabel("Home");
@@ -44,7 +46,8 @@ public class UiMain extends JFrame {
         // Initialize the search panel and add to the center
         searchPanel = new SearchPanel();
         topPanel.add(searchPanel, BorderLayout.CENTER); // Search Panel will manage search field and icon
-
+        topPanel.setPreferredSize(new Dimension(getWidth(),40)); // Fixer la hauteur de la barre superieure
+        
         // Add the topPanel to the NORTH of the window
         add(topPanel, BorderLayout.NORTH);
 
@@ -56,7 +59,7 @@ public class UiMain extends JFrame {
         searchResultsPanel = new SearchResultsPanel();
 
         // Create a container panel with CardLayout to manage different panels
-        JPanel containerPanel = new JPanel(cardLayout);
+        containerPanel = new JPanel(cardLayout);
         containerPanel.add(recommendationPanel, "Recommendation");
         containerPanel.add(searchResultsPanel, "SearchResults");
 
@@ -76,28 +79,26 @@ public class UiMain extends JFrame {
 
     private void performSearch() {
         String searchText = searchPanel.getSearchField().getText().trim();
-        System.out.println("Searching for: " + searchText);  // Debug line to check search input
         boolean hasResults = searchResultsPanel.performSearch(searchText);
 
         // Toggle panels using CardLayout
         if (hasResults) {
-            cardLayout.show(getContentPane(), "SearchResults");
+            cardLayout.show(containerPanel, "SearchResults");
         } else {
-            cardLayout.show(getContentPane(), "Recommendation");
+            cardLayout.show(containerPanel, "Recommendation");
         }
 
         // Force layout refresh to ensure the UI updates
-        revalidate();
-        repaint();
+        containerPanel.revalidate();
+        containerPanel.repaint();
     }
-
+    
     private void showRecommendationPage() {
-        System.out.println("Switching to Recommendation Panel...");
-        cardLayout.show(getContentPane(), "Recommendation");
+        cardLayout.show(containerPanel, "Recommendation");
 
         // Force layout refresh after switching
-        revalidate();
-        repaint();
+        containerPanel.revalidate();
+        containerPanel.repaint();
     }
 
     public static void main(String[] args) {
