@@ -101,7 +101,5 @@ public class UiMain extends JFrame {
         containerPanel.repaint();
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(UiMain::new);
-    }
+
 }
