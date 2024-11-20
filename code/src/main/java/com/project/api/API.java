@@ -24,23 +24,43 @@ public class API {
     }
 
     // Méthode pour obtenir des comics populaires avec une limite configurable
-    public String getPopularComics(int limit) {
-        String endpoint = "volumes/?api_key=" + API_KEY + "&format=json&sort=date_added:desc&limit=" + limit;
-        String url = BASE_URL + endpoint;
+	public String getPopularComics(int limit) {
+		String endpoint = "volumes/?api_key=" + API_KEY + "&format=json&sort=date_added:desc&limit=" + limit;
+		String url = BASE_URL + endpoint;
 
-        Request request = new Request.Builder()
-                .url(url)
-                .header("User-Agent", "ComicApp/1.0") // Ajout du User-Agent
-                .build();
+		Request request = new Request.Builder().url(url).header("User-Agent", "ComicApp/1.0") // Ajout du User-Agent
+				.build();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
-            }
-            return response.body() != null ? response.body().string() : null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null; // En cas d'erreur, retourne null
-        }
-}
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
+			}
+			return response.body() != null ? response.body().string() : null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null; // En cas d'erreur, retourne null
+		}
+	}
+	
+	// Méthode pour chercher des comics par titre 
+	
+	public String searchComicsByTitle(String title) {
+	    String endpoint = "search/?api_key=" + API_KEY + "&format=json&resources=volume&query=" + title;
+	    String url = BASE_URL + endpoint;
+
+	    Request request = new Request.Builder()
+	            .url(url)
+	            .header("User-Agent", "ComicApp/1.0")
+	            .build();
+
+	    try (Response response = client.newCall(request).execute()) {
+	        if (!response.isSuccessful()) {
+	            throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
+	        }
+	        return response.body() != null ? response.body().string() : null;
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
 }
