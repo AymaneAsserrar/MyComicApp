@@ -62,7 +62,7 @@ public class SearchController {
                 comic.setDescription("No description available.");
             }
 
-            // Ajouter le volume à la liste
+            // Ajouter le volume à la listeee
             comicsList.add(comic);
         }
 
