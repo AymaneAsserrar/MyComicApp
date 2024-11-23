@@ -1,11 +1,9 @@
 package com.project.ui;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-
 import com.project.controller.SearchController;
 import com.project.model.Comic;
 
+import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.util.List;
@@ -13,102 +11,70 @@ import java.util.List;
 public class SearchResultsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private JTable resultsTable;
-    private DefaultTableModel tableModel;
-    private SearchController searchController = new SearchController();
-    private List<Comic> searchList;
-    JLabel searchComicsLabel = new JLabel("Found Comics", SwingConstants.CENTER);
-    JPanel comicsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5)); // 3 columns, as many rows as needed
+    private SearchController searchController;
+    private JPanel resultsGridPanel;
 
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
 
-        searchComicsLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        add(searchComicsLabel, BorderLayout.NORTH);
-    }
+        // Title for the search results section
+        JLabel searchResultsLabel = new JLabel("Comics Found", SwingConstants.CENTER);
+        searchResultsLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        add(searchResultsLabel, BorderLayout.NORTH);
 
-    public boolean performSearch(String searchText) {
+        // Panel for displaying the results in a grid
+        resultsGridPanel = new JPanel(new GridLayout(4, 3, 5, 5)); // Ensure it maintains 4 rows and 3 columns
+        resultsGridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        this.searchList = searchController.searchComicsByTitle(searchText);
-        int limit = this.searchList.size() > 12 ? 12 : this.searchList.size();
-
-        if(this.searchList.size() <= 0) {return false;}
-        for (int i = 0; i < limit; i++) {
-            JPanel comicPanel = new JPanel(new BorderLayout());
-            JLabel logoLabel;
-
-            try {
-                String coverImageUrl = searchList.get(i).getCoverImageUrl();
-                if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
-                    URL imageURL = new URL(coverImageUrl);
-                    ImageIcon icon = new ImageIcon(imageURL);
-                    Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                    logoLabel = new JLabel(new ImageIcon(img));
-                } else {
-                    ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
-                    Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                    logoLabel = new JLabel(new ImageIcon(fallbackImg));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
-                Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                logoLabel = new JLabel(new ImageIcon(fallbackImg));
-            }
-            
-            JLabel titleLabel = new JLabel(searchList.get(i).getName(), SwingConstants.CENTER);
-            comicPanel.add(logoLabel, BorderLayout.CENTER);
-            comicPanel.add(titleLabel, BorderLayout.SOUTH);
-            comicsGridPanel.add(comicPanel);
-        }
-
-        add(comicsGridPanel, BorderLayout.CENTER);
-
-        return true;
-    }
-    /*
-    public SearchResultsPanel() {
-        setLayout(new BorderLayout());
-
-        tableModel = new DefaultTableModel(new Object[]{"Title", "Publisher", "Release Date"}, 0);
-        resultsTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
+        JScrollPane scrollPane = new JScrollPane(resultsGridPanel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Initially, hide the search results panel until there's a search
-        setVisible(false);
+        // Initialize the search controller
+        searchController = new SearchController();
     }
 
-    public boolean performSearch(String searchText) {
-        // Mock data for demonstration (replace with real API call)
-        Object[][] mockResults = {
-            {"Comic 1", "Publisher A", "2024-01-01"},
-            {"Comic 2", "Publisher B", "2024-01-05"},
-            {"Comic 3", "Publisher C", "2024-01-10"}
-        };
+    public void displayResults(String searchText) {
+        // Clear the previous results
+        resultsGridPanel.removeAll();
 
-        // Clear previous results
-        tableModel.setRowCount(0);
-        boolean resultsFound = false;
+        // Get the search results from the API via the SearchController
+        List<Comic> searchResults = searchController.searchComicsByTitle(searchText);
 
-        // Check if any result contains the search text (case insensitive)
-        for (Object[] result : mockResults) {
-            if (result[0].toString().toLowerCase().contains(searchText.toLowerCase())) {
-                tableModel.addRow(result);
-                resultsFound = true;
+        int resultsCount = searchResults.size();
+        int limit = 12;
+
+        // Add comics to the grid
+        for (int i = 0; i < resultsCount; i++) {
+            Comic comic = searchResults.get(i);
+
+            JPanel comicPanel = new JPanel(new BorderLayout());
+            comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JLabel coverLabel;
+            try {
+                URL imageURL = new URL(comic.getCoverImageUrl());
+                ImageIcon icon = new ImageIcon(imageURL);
+                Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+                coverLabel = new JLabel(new ImageIcon(img));
+            } catch (Exception e) {
+                coverLabel = new JLabel("Image unavailable");
             }
+
+            JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
+            comicPanel.add(coverLabel, BorderLayout.CENTER);
+            comicPanel.add(titleLabel, BorderLayout.SOUTH);
+
+            resultsGridPanel.add(comicPanel);
         }
 
+        // Fill empty cells with blank panels to maintain consistent layout
+        for (int i = resultsCount; i < limit; i++) {
+            JPanel emptyPanel = new JPanel();
+            resultsGridPanel.add(emptyPanel);
+        }
 
-        // After populating the table, make the panel visible if there are results
-        setVisible(resultsFound);
-
-
-        // Refresh layout
+        // Repaint the panel after updating the results
         revalidate();
         repaint();
-
-        return resultsFound;
-    }*/
-
+    }
 }

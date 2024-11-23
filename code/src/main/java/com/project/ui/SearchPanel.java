@@ -1,62 +1,51 @@
 package com.project.ui;
 
-import com.project.controller.SearchController;
-import com.project.model.Comic;
-
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 public class SearchPanel extends JPanel {
     private static final long serialVersionUID = 1260918379909615305L;
 
     private JTextField searchField;
-    private JButton searchButton;
-    private JTable resultsTable;
-    private DefaultTableModel tableModel;
-    private SearchController searchController;
+    private JButton searchIconButton;
 
     public SearchPanel() {
         setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // Search icon setup
+        ImageIcon searchIconImage = new ImageIcon(getClass().getResource("/search.png"));
+        Image searchImage = searchIconImage.getImage().getScaledInstance(15, 15, Image.SCALE_SMOOTH); // Smaller icon size
+        searchIconButton = new JButton(new ImageIcon(searchImage));
+        searchIconButton.setPreferredSize(new Dimension(35, 35)); // Reduced the size to make it more compact
+        searchIconButton.setFocusPainted(false);
+        searchIconButton.setBorderPainted(false);
+        searchIconButton.setContentAreaFilled(false); // Makes the button transparent
+        searchIconButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Search field setup
-        searchField = new JTextField(20);
-        searchField.setPreferredSize(new Dimension(200, 30));
-        
-        // Search button setup
-        ImageIcon searchIcon = new ImageIcon(getClass().getResource("/search.png"));
-        Image searchImage = searchIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-        searchButton = new JButton(new ImageIcon(searchImage));
-        searchButton.setPreferredSize(new Dimension(40, 40));
-        searchButton.setFocusPainted(false);
-        searchButton.setBorderPainted(false);
-        searchButton.setEnabled(false);
+        searchField = new JTextField(15);
+        searchField.setVisible(false); // Initially hidden
+        searchField.setPreferredSize(new Dimension(150, 25)); // Width: 150 pixels, Height: 25 pixels
+        searchField.setMaximumSize(new Dimension(150, 25)); // Set maximum size to limit the height
 
-        // Results table setup
-        String[] columnNames = {"ID", "Name", "Cover Image URL"};
-        tableModel = new DefaultTableModel(columnNames, 0);
-        resultsTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
-
-        // Search field listener to enable/disable button
-        searchField.addKeyListener(new KeyAdapter() {
+        // Toggle the visibility of the search field on icon click
+        searchIconButton.addActionListener(new ActionListener() {
             @Override
-            public void keyReleased(KeyEvent e) {
-                String text = searchField.getText().trim();
-                searchButton.setEnabled(!text.isEmpty());
+            public void actionPerformed(ActionEvent e) {
+                boolean currentlyVisible = searchField.isVisible();
+                searchField.setVisible(!currentlyVisible);
+                revalidate();
+                repaint();
             }
         });
 
-        // Initialize search controller
-        searchController = new SearchController();
-
-        // Search button action listener
-        searchButton.addActionListener(new ActionListener() {
+        // Add key listener for pressing Enter in the search field to trigger search
+        searchField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String searchTerm = searchField.getText().trim();
@@ -64,37 +53,34 @@ public class SearchPanel extends JPanel {
             }
         });
 
-        // Layout components
-        JPanel searchBar = new JPanel(new BorderLayout());
-        searchBar.add(searchField, BorderLayout.CENTER);
-        searchBar.add(searchButton, BorderLayout.EAST);
+        // Add key listener to enable/disable the search action based on input
+        searchField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String text = searchField.getText().trim();
+                searchIconButton.setEnabled(!text.isEmpty());
+            }
+        });
 
-        add(searchBar, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        // Create a container to hold search bar elements aligned to the right
+        JPanel rightAlignedPanel = new JPanel();
+        rightAlignedPanel.setLayout(new BoxLayout(rightAlignedPanel, BoxLayout.X_AXIS));
+        rightAlignedPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        rightAlignedPanel.add(Box.createHorizontalGlue());
+        rightAlignedPanel.add(searchField);
+        rightAlignedPanel.add(Box.createRigidArea(new Dimension(10, 0))); // Small space between field and icon
+        rightAlignedPanel.add(searchIconButton);
+
+        // Set up the main panel layout
+        add(Box.createHorizontalGlue(), BorderLayout.WEST);
+        add(rightAlignedPanel, BorderLayout.EAST);
     }
 
     private void performSearch(String searchTerm) {
-        // Clear previous results
-        tableModel.setRowCount(0);
-
-        // Perform search
-        List<Comic> searchResults = searchController.searchComicsByTitle(searchTerm);
-
-        // Populate table with results
-        for (Comic comic : searchResults) {
-            tableModel.addRow(new Object[]{
-                comic.getId(),
-                comic.getName(),
-                comic.getCoverImageUrl()
-            });
+        if (!searchTerm.isEmpty()) {
+            // Trigger the search if the search field is not empty
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            parentFrame.displaySearchResults(searchTerm);
         }
-    }
-
-    public JTextField getSearchField() {
-        return searchField;
-    }
-
-    public JButton getSearchButton() {
-        return searchButton;
     }
 }
