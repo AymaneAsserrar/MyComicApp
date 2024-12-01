@@ -1,6 +1,8 @@
 package com.project.ui;
+
 import com.project.controller.RecommendationController;
 import com.project.model.Comic;
+import com.project.util.ScrollUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,8 +10,9 @@ import java.util.List;
 import java.net.URL;
 
 public class RecommendationPanel extends JPanel {
-
     private static final long serialVersionUID = 2561771664627867791L;
+    private JPanel comicsGridPanel;
+    private RecommendationController recommendationController;
 
     public RecommendationPanel() {
         setLayout(new BorderLayout());
@@ -18,43 +21,53 @@ public class RecommendationPanel extends JPanel {
         popularComicsLabel.setFont(new Font("Arial", Font.BOLD, 20));
         add(popularComicsLabel, BorderLayout.NORTH);
 
-        JPanel comicsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5)); // 3 columns, as many rows as needed
+        comicsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5));
+        recommendationController = new RecommendationController();
 
-        int limit = 12; // number of recommended comics displayed
+        JScrollPane scrollPane = ScrollUtil.createInfiniteScrollPane(comicsGridPanel, 
+            offset -> loadMoreComics(offset));
 
-        // Import recommendation list with API
-        RecommendationController recommendationController = new RecommendationController();
-        List<Comic> recommendationList = recommendationController.getPopularComics(limit);
+        add(scrollPane, BorderLayout.CENTER);
+        loadMoreComics(0);
+    }
 
-        for (int i = 0; i < limit; i++) {
-            JPanel comicPanel = new JPanel(new BorderLayout());
-            JLabel logoLabel;
+    private void loadMoreComics(int offset) {
+        List<Comic> recommendationList = recommendationController.getPopularComics(ScrollUtil.PAGE_SIZE);
+        for (Comic comic : recommendationList) {
+            addComicPanel(comic);
+        }
+        revalidate();
+        repaint();
+    }
 
-            try {
-                String coverImageUrl = recommendationList.get(i).getCoverImageUrl();
-                if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
-                    URL imageURL = new URL(coverImageUrl);
-                    ImageIcon icon = new ImageIcon(imageURL);
-                    Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                    logoLabel = new JLabel(new ImageIcon(img));
-                } else {
-                    ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
-                    Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                    logoLabel = new JLabel(new ImageIcon(fallbackImg));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
-                Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                logoLabel = new JLabel(new ImageIcon(fallbackImg));
+    private void addComicPanel(Comic comic) {
+        JPanel comicPanel = new JPanel(new BorderLayout());
+        JLabel logoLabel;
+
+        try {
+            String coverImageUrl = comic.getCoverImageUrl();
+            if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
+                URL imageURL = new URL(coverImageUrl);
+                ImageIcon icon = new ImageIcon(imageURL);
+                Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+                logoLabel = new JLabel(new ImageIcon(img));
+            } else {
+                logoLabel = createFallbackLabel();
             }
-            
-            JLabel titleLabel = new JLabel(recommendationList.get(i).getName(), SwingConstants.CENTER);
-            comicPanel.add(logoLabel, BorderLayout.CENTER);
-            comicPanel.add(titleLabel, BorderLayout.SOUTH);
-            comicsGridPanel.add(comicPanel);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logoLabel = createFallbackLabel();
         }
 
-        add(comicsGridPanel, BorderLayout.CENTER);
+        JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
+        comicPanel.add(logoLabel, BorderLayout.CENTER);
+        comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        comicsGridPanel.add(comicPanel);
+    }
+
+    private JLabel createFallbackLabel() {
+        ImageIcon fallbackIcon = new ImageIcon("image-comics-seeklogo.svg");
+        Image fallbackImg = fallbackIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+        return new JLabel(new ImageIcon(fallbackImg));
     }
 }
