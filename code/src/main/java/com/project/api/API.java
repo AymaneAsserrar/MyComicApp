@@ -63,24 +63,24 @@ public class API {
 	    }
 	}
 
-    public String searchComicsByTitle(String title, int offset, int limit) {
-        String endpoint = String.format("search/?api_key=%s&format=json&resources=volume&query=%s&offset=%d&limit=%d",
-            API_KEY, title, offset, limit);
-        String url = BASE_URL + endpoint;
+    // public String searchComicsByTitle(String title, int offset, int limit) {
+    //     String endpoint = String.format("search/?api_key=%s&format=json&resources=volume&query=%s&offset=%d&limit=%d",
+    //         API_KEY, title, offset, limit);
+    //     String url = BASE_URL + endpoint;
 
-        Request request = new Request.Builder()
-            .url(url)
-            .header("User-Agent", "ComicApp/1.0")
-            .build();
+    //     Request request = new Request.Builder()
+    //         .url(url)
+    //         .header("User-Agent", "ComicApp/1.0")
+    //         .build();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Request error: HTTP " + response.code());
-            }
-            return response.body() != null ? response.body().string() : null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    //     try (Response response = client.newCall(request).execute()) {
+    //         if (!response.isSuccessful()) {
+    //             throw new IOException("Request error: HTTP " + response.code());
+    //         }
+    //         return response.body() != null ? response.body().string() : null;
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //         return null;
+    //     }
+    // }
 }
