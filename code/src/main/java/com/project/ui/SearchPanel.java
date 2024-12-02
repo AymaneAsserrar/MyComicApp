@@ -12,33 +12,52 @@ public class SearchPanel extends JPanel {
 
     private JTextField searchField;
     private JButton searchIconButton;
+    private JComboBox<String> searchTypeComboBox;
+    private boolean isSearchVisible = false;
 
     public SearchPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+        // Search type combo box setup
+        searchTypeComboBox = new JComboBox<>(new String[]{"Comic", "Character"});
+        searchTypeComboBox.setFont(new Font("Verdana", Font.BOLD, 10));
+        searchTypeComboBox.setPreferredSize(new Dimension(80, 25));
+        searchTypeComboBox.setMaximumSize(new Dimension(80, 25));
+        searchTypeComboBox.setBackground(Color.WHITE);
+        searchTypeComboBox.setForeground(Color.BLACK);
+        searchTypeComboBox.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        searchTypeComboBox.setVisible(false);
+
         // Search icon setup
         ImageIcon searchIconImage = new ImageIcon(getClass().getResource("/search.png"));
-        Image searchImage = searchIconImage.getImage().getScaledInstance(15, 15, Image.SCALE_SMOOTH); // Smaller icon size
+        Image searchImage = searchIconImage.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         searchIconButton = new JButton(new ImageIcon(searchImage));
-        searchIconButton.setPreferredSize(new Dimension(35, 35)); // Reduced the size to make it more compact
+        searchIconButton.setPreferredSize(new Dimension(40, 40));
+        searchIconButton.setMaximumSize(new Dimension(40, 40));
         searchIconButton.setFocusPainted(false);
         searchIconButton.setBorderPainted(false);
-        searchIconButton.setContentAreaFilled(false); // Makes the button transparent
+        searchIconButton.setContentAreaFilled(false);
         searchIconButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Search field setup
         searchField = new JTextField(15);
-        searchField.setVisible(false); // Initially hidden
-        searchField.setPreferredSize(new Dimension(150, 25)); // Width: 150 pixels, Height: 25 pixels
-        searchField.setMaximumSize(new Dimension(150, 25)); // Set maximum size to limit the height
+        searchField.setPreferredSize(new Dimension(150, 25));
+        searchField.setMaximumSize(new Dimension(150, 25));
+        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchField.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        searchField.setVisible(false);
 
         // Toggle the visibility of the search field on icon click
         searchIconButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                boolean currentlyVisible = searchField.isVisible();
-                searchField.setVisible(!currentlyVisible);
+                isSearchVisible = !isSearchVisible;
+                searchField.setVisible(isSearchVisible);
+                searchTypeComboBox.setVisible(isSearchVisible);
+                if (!isSearchVisible) {
+                    searchField.setText("");
+                }
                 revalidate();
                 repaint();
             }
@@ -65,22 +84,27 @@ public class SearchPanel extends JPanel {
         // Create a container to hold search bar elements aligned to the right
         JPanel rightAlignedPanel = new JPanel();
         rightAlignedPanel.setLayout(new BoxLayout(rightAlignedPanel, BoxLayout.X_AXIS));
+        rightAlignedPanel.setOpaque(false);
         rightAlignedPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        rightAlignedPanel.add(Box.createHorizontalGlue());
         rightAlignedPanel.add(searchField);
-        rightAlignedPanel.add(Box.createRigidArea(new Dimension(10, 0))); // Small space between field and icon
-        rightAlignedPanel.add(searchIconButton);
+        rightAlignedPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+        rightAlignedPanel.add(searchTypeComboBox);
 
-        // Set up the main panel layout
-        add(Box.createHorizontalGlue(), BorderLayout.WEST);
-        add(rightAlignedPanel, BorderLayout.EAST);
+        // Set up the main panel layout: Search icon stays on the right, right-aligned components come before it
+        JPanel searchContainer = new JPanel(new BorderLayout());
+        searchContainer.setOpaque(false);
+        searchContainer.add(rightAlignedPanel, BorderLayout.CENTER);
+        searchContainer.add(searchIconButton, BorderLayout.EAST);
+
+        // Add the container panel
+        add(searchContainer, BorderLayout.EAST);
     }
 
     private void performSearch(String searchTerm) {
         if (!searchTerm.isEmpty()) {
-            // Trigger the search if the search field is not empty
             UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
-            parentFrame.displaySearchResults(searchTerm);
+            String searchType = (String) searchTypeComboBox.getSelectedItem();
+            parentFrame.displaySearchResults(searchTerm, searchType);
         }
     }
 }
