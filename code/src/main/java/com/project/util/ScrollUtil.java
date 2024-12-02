@@ -16,27 +16,30 @@ public class ScrollUtil {
     public static JScrollPane createInfiniteScrollPane(JPanel contentPanel, LoadMoreCallback callback) {
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
             private int lastOffset = 0;
-            
+            private boolean isLoading = false;
+
             @Override
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 JScrollBar scrollBar = (JScrollBar) e.getAdjustable();
                 int extent = scrollBar.getModel().getExtent();
                 int maximum = scrollBar.getModel().getMaximum();
                 int value = e.getValue();
-                
-                if (maximum - (value + extent) <= SCROLL_THRESHOLD) {
+
+                if (maximum - (value + extent) <= SCROLL_THRESHOLD && !isLoading) {
                     int currentOffset = contentPanel.getComponentCount();
                     if (currentOffset > lastOffset) {
                         lastOffset = currentOffset;
+                        isLoading = true;
                         callback.onLoadMore(currentOffset);
+                        isLoading = false;
                     }
                 }
             }
         });
-        
+
         return scrollPane;
     }
 }
