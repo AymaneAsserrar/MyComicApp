@@ -41,7 +41,7 @@ public class Character {
         this.imageUrl = imageUrl;
     }
 
-    public String getDescription() {""
+    public String getDescription() {
         return description;
     }
 
