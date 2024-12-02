@@ -43,7 +43,6 @@ public class API {
 	}
 	
 	// Méthode pour chercher des comics par titre 
-	
 	public String searchComicsByTitle(String title) {
 	    String endpoint = "search/?api_key=" + API_KEY + "&format=json&resources=volume&query=" + title;
 	    String url = BASE_URL + endpoint;
@@ -63,4 +62,25 @@ public class API {
 	        return null;
 	    }
 	}
+
+    public String searchComicsByTitle(String title, int offset, int limit) {
+        String endpoint = String.format("search/?api_key=%s&format=json&resources=volume&query=%s&offset=%d&limit=%d",
+            API_KEY, title, offset, limit);
+        String url = BASE_URL + endpoint;
+
+        Request request = new Request.Builder()
+            .url(url)
+            .header("User-Agent", "ComicApp/1.0")
+            .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Request error: HTTP " + response.code());
+            }
+            return response.body() != null ? response.body().string() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

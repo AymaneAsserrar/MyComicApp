@@ -2,79 +2,107 @@ package com.project.ui;
 
 import com.project.controller.SearchController;
 import com.project.model.Comic;
+import com.project.util.ScrollUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SearchResultsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
-
+    private static final int PAGE_SIZE = 12;
+    private int currentPage = 0;
+    private boolean isLoading = false;
+    private boolean hasMoreResults = true;
     private SearchController searchController;
     private JPanel resultsGridPanel;
-
+    private String currentSearchText;
+    private Set<Integer> displayedComicIds;
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
-
-        // Title for the search results section
+    
         JLabel searchResultsLabel = new JLabel("Comics Found", SwingConstants.CENTER);
         searchResultsLabel.setFont(new Font("Arial", Font.BOLD, 20));
         add(searchResultsLabel, BorderLayout.NORTH);
-
-        // Panel for displaying the results in a grid
-        resultsGridPanel = new JPanel(new GridLayout(4, 3, 5, 5)); // Ensure it maintains 4 rows and 3 columns
+    
+        resultsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5));
         resultsGridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        JScrollPane scrollPane = new JScrollPane(resultsGridPanel);
+    
+        JScrollPane scrollPane = ScrollUtil.createInfiniteScrollPane(resultsGridPanel, 
+            offset -> loadMoreResults(offset, currentSearchText));
+    
         add(scrollPane, BorderLayout.CENTER);
-
-        // Initialize the search controller
         searchController = new SearchController();
+        displayedComicIds = new HashSet<>();
     }
 
-    public void displayResults(String searchText) {
-        // Clear the previous results
-        resultsGridPanel.removeAll();
+public void displayResults(String searchText, String searchType) {
+    currentSearchText = searchText;
+    currentPage = 0;
+    hasMoreResults = true;
+    isLoading = false;
+    displayedComicIds.clear();
+    resultsGridPanel.removeAll();
+    loadMoreResults(0, searchType);
+}
+private void loadMoreResults(int offset, String searchType) {
+    if (isLoading || !hasMoreResults) {
+        return;
+    }
 
-        // Get the search results from the API via the SearchController
-        List<Comic> searchResults = searchController.searchComicsByTitle(searchText);
+    if (currentSearchText != null && !currentSearchText.isEmpty()) {
+        isLoading = true;
 
-        int resultsCount = searchResults.size();
-        int limit = 12;
+        // Calculate the page number based on offset
+        currentPage = offset / PAGE_SIZE;
 
-        // Add comics to the grid
-        for (int i = 0; i < resultsCount; i++) {
-            Comic comic = searchResults.get(i);
+        List<Comic> searchResults;
+        if ("Comic".equals(searchType)) {
+            searchResults = searchController.searchComicsByTitle(currentSearchText);
+        } else if ("Character".equals(searchType)) {
+            searchResults = searchController.searchCharactersByName(currentSearchText);
+        } else {
+            searchResults = new ArrayList<>();
+        }
 
-            JPanel comicPanel = new JPanel(new BorderLayout());
-            comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-            JLabel coverLabel;
-            try {
-                URL imageURL = new URL(comic.getCoverImageUrl());
-                ImageIcon icon = new ImageIcon(imageURL);
-                Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                coverLabel = new JLabel(new ImageIcon(img));
-            } catch (Exception e) {
-                coverLabel = new JLabel("Image unavailable");
+        if (searchResults.isEmpty()) {
+            hasMoreResults = false;
+        } else {
+            for (Comic comic : searchResults) {
+                if (!displayedComicIds.contains(comic.getId())) {
+                    addComicPanel(comic, searchType);
+                    displayedComicIds.add(comic.getId());
+                }
             }
-
-            JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
-            comicPanel.add(coverLabel, BorderLayout.CENTER);
-            comicPanel.add(titleLabel, BorderLayout.SOUTH);
-
-            resultsGridPanel.add(comicPanel);
+            revalidate();
+            repaint();
         }
 
-        // Fill empty cells with blank panels to maintain consistent layout
-        for (int i = resultsCount; i < limit; i++) {
-            JPanel emptyPanel = new JPanel();
-            resultsGridPanel.add(emptyPanel);
+        isLoading = false;
+    }
+}
+
+    private void addComicPanel(Comic comic, String searchType) {
+        JPanel comicPanel = new JPanel(new BorderLayout());
+        comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel coverLabel;
+        try {
+            URL imageURL = new URL(comic.getCoverImageUrl());
+            ImageIcon icon = new ImageIcon(imageURL);
+            Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+            coverLabel = new JLabel(new ImageIcon(img));
+        } catch (Exception e) {
+            coverLabel = new JLabel("Image unavailable");
         }
 
-        // Repaint the panel after updating the results
-        revalidate();
-        repaint();
+        JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
+        comicPanel.add(coverLabel, BorderLayout.CENTER);
+        comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        resultsGridPanel.add(comicPanel);
     }
 }

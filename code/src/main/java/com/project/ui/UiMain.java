@@ -23,8 +23,6 @@ public class UiMain extends JFrame {
         cardLayout = new CardLayout();
         setLayout(new BorderLayout());
 
-
-
         // Load the home logo from resources
         URL logoURL = getClass().getClassLoader().getResource("homeLogo.png");
         if (logoURL != null) {
@@ -33,10 +31,11 @@ public class UiMain extends JFrame {
             homeLabel = new JLabel(new ImageIcon(logoImage));
             ImageIcon appLogoIcon = new ImageIcon(logoURL);
             Image appLogoImage = appLogoIcon.getImage();
-            setIconImage(appLogoImage); 
+            setIconImage(appLogoImage);
         } else {
             homeLabel = new JLabel("Home");
         }
+
         homeLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         homeLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -68,8 +67,8 @@ public class UiMain extends JFrame {
         setVisible(true);
     }
 
-    public void displaySearchResults(String searchText) {
-        searchResultsPanel.displayResults(searchText);
+    public void displaySearchResults(String searchText, String searchType) {
+        searchResultsPanel.displayResults(searchText, searchType);
         cardLayout.show(containerPanel, "SearchResults");
     }
 
@@ -78,5 +77,4 @@ public class UiMain extends JFrame {
         containerPanel.revalidate();
         containerPanel.repaint();
     }
-
 }
