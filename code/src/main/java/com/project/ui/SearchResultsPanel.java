@@ -62,7 +62,7 @@ private void loadMoreResults(int offset, String searchType) {
 
         List<Comic> searchResults;
         if ("Comic".equals(searchType)) {
-            searchResults = searchController.searchComicsByTitle(currentSearchText, currentPage, PAGE_SIZE);
+            searchResults = searchController.searchComicsByTitle(currentSearchText);
         } else if ("Character".equals(searchType)) {
             searchResults = searchController.searchCharactersByName(currentSearchText);
         } else {
