@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.project.api.API;
 import com.project.model.Comic;
+import com.project.model.Character;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,41 +34,58 @@ public class RecommendationController {
 
         for (JsonElement element : resultsArray) {
             JsonObject volumeJson = element.getAsJsonObject();
-
-            // Initialiser un nouvel objet Comic (Volume dans ce cas)
-            Comic comic = new Comic();
-            comic.setId(volumeJson.get("id").getAsInt());
-
-            // Vérifier si le champ "name" est présent
-            if (volumeJson.has("name") && !volumeJson.get("name").isJsonNull()) {
-                comic.setName(volumeJson.get("name").getAsString());
-            } else {
-                comic.setName("Unknown Title");
-            }
-
-            // Vérifier s'il y a une image disponible
-            if (volumeJson.has("image") && !volumeJson.get("image").isJsonNull()) {
-                JsonObject imageJson = volumeJson.getAsJsonObject("image");
-                if (imageJson.has("thumb_url") && !imageJson.get("thumb_url").isJsonNull()) {
-                    comic.setCoverImageUrl(imageJson.get("thumb_url").getAsString());
-                } else {
-                    comic.setCoverImageUrl("https://via.placeholder.com/150"); // URL d'image par défaut
-                }
-            } else {
-                comic.setCoverImageUrl("https://via.placeholder.com/150"); // URL d'image par défaut
-            }
-
-            // Vérifier si une description est présente
-            if (volumeJson.has("description") && !volumeJson.get("description").isJsonNull()) {
-                comic.setDescription(volumeJson.get("description").getAsString());
-            } else {
-                comic.setDescription("No description available.");
-            }
-
-            // Ajouter le volume à la liste
+            Comic comic = parseComicDetails(volumeJson);
             comicsList.add(comic);
         }
 
         return comicsList;
+    }
+
+    private Comic parseComicDetails(JsonObject volumeJson) {
+        Comic comic = new Comic();
+        comic.setId(volumeJson.get("id").getAsInt());
+        comic.setName(getJsonString(volumeJson, "name", "Unknown Title"));
+        comic.setDescription(getJsonString(volumeJson, "description", "No description available."));
+        comic.setDeck(getJsonString(volumeJson, "deck", ""));
+
+        // Parse image
+        if (volumeJson.has("image") && !volumeJson.get("image").isJsonNull()) {
+            JsonObject imageJson = volumeJson.getAsJsonObject("image");
+            comic.setCoverImageUrl(getJsonString(imageJson, "medium_url", "https://via.placeholder.com/150"));
+        }
+
+        // Parse authors
+        if (volumeJson.has("people") && !volumeJson.get("people").isJsonNull()) {
+            JsonArray peopleArray = volumeJson.getAsJsonArray("people");
+            for (JsonElement personElement : peopleArray) {
+                JsonObject person = personElement.getAsJsonObject();
+                String role = getJsonString(person, "role", "");
+                if (role.equalsIgnoreCase("writer") || role.equalsIgnoreCase("artist")) {
+                    comic.addAuthor(getJsonString(person, "name", ""));
+                }
+            }
+        }
+
+        // Parse characters
+        if (volumeJson.has("characters") && !volumeJson.get("characters").isJsonNull()) {
+            JsonArray charactersArray = volumeJson.getAsJsonArray("characters");
+            List<Character> charactersList = new ArrayList<>();
+            for (JsonElement charElement : charactersArray) {
+                JsonObject charJson = charElement.getAsJsonObject();
+                Character character = new Character();
+                character.setId(charJson.get("id").getAsInt());
+                character.setName(getJsonString(charJson, "name", ""));
+                character.setRealName(getJsonString(charJson, "real_name", ""));
+                charactersList.add(character);
+            }
+            comic.setCharacters(charactersList);
+        }
+
+        return comic;
+    }
+
+    private String getJsonString(JsonObject json, String key, String defaultValue) {
+        return json.has(key) && !json.get(key).isJsonNull() ? 
+               json.get(key).getAsString() : defaultValue;
     }
 }

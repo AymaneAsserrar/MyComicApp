@@ -97,6 +97,16 @@ public class SearchResultsPanel extends JPanel {
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        
+        comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(SearchResultsPanel.this);
+                parentFrame.displayComicDetails(comic, "SearchResults");
+            }
+        });
+        
         resultsGridPanel.add(comicPanel);
     }
 

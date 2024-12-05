@@ -14,6 +14,7 @@ public class UiMain extends JFrame {
     private JLabel homeLabel;
     private CardLayout cardLayout;
     private JPanel containerPanel;
+    private ComicDetailsPanel comicDetailsPanel;
 
     public UiMain() {
         setTitle("My Comic App");
@@ -56,13 +57,17 @@ public class UiMain extends JFrame {
         // Initialize the panels
         recommendationPanel = new RecommendationPanel();
         searchResultsPanel = new SearchResultsPanel();
+        comicDetailsPanel = new ComicDetailsPanel();
 
         // Container for switching between panels
         containerPanel = new JPanel(cardLayout);
         containerPanel.add(recommendationPanel, "Recommendation");
         containerPanel.add(searchResultsPanel, "SearchResults");
+        containerPanel.add(comicDetailsPanel, "ComicDetails");
 
         add(containerPanel, BorderLayout.CENTER);
+
+        comicDetailsPanel.addBackButtonListener(e -> showPreviousPanel());
 
         setVisible(true);
     }
@@ -72,9 +77,20 @@ public class UiMain extends JFrame {
         cardLayout.show(containerPanel, "SearchResults");
     }
 
+    public void displayComicDetails(Comic comic, String sourcePanel) {
+        comicDetailsPanel.setPreviousPanel(sourcePanel);
+        comicDetailsPanel.displayComicDetails(comic);
+        cardLayout.show(containerPanel, "ComicDetails");
+    }
+
     private void showRecommendationPage() {
         cardLayout.show(containerPanel, "Recommendation");
         containerPanel.revalidate();
         containerPanel.repaint();
+    }
+
+    private void showPreviousPanel() {
+        String previousPanel = comicDetailsPanel.getPreviousPanel();
+        cardLayout.show(containerPanel, previousPanel);
     }
 }
