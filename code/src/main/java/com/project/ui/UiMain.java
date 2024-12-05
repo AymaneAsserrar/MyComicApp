@@ -1,27 +1,37 @@
 package com.project.ui;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.project.controller.SearchController;
+import com.project.model.Comic;
+import com.project.util.CustomSearchField;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.net.URL;
-import com.project.model.Comic;
 
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
 
     private RecommendationPanel recommendationPanel;
-    private SearchPanel searchPanel;
     private SearchResultsPanel searchResultsPanel;
-    private AuthenticationPanel authenticationPanel;
+    private ComicDetailsPanel comicDetailsPanel;
     private JLabel homeLabel;
-    private JLabel authLabel;
     private CardLayout cardLayout;
     private JPanel containerPanel;
-    private ComicDetailsPanel comicDetailsPanel;
+    private CustomSearchField customSearchField;
+    private JLabel profileLabel;
+    private JButton profileButton;
+    private JPanel searchProfilePanel;
 
     public UiMain() {
+        // Set FlatLaf theme
+        FlatDarkLaf.setup();
+
         setTitle("My Comic App");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 1000);
+        setSize(1000, 850); // Adjust window height
 
         cardLayout = new CardLayout();
         setLayout(new BorderLayout());
@@ -30,7 +40,7 @@ public class UiMain extends JFrame {
         URL logoURL = getClass().getClassLoader().getResource("homeLogo.png");
         if (logoURL != null) {
             ImageIcon logoIcon = new ImageIcon(logoURL);
-            Image logoImage = logoIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH); // Agrandir le logo pour une meilleure visibilité
+            Image logoImage = logoIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH); // Slightly bigger logo
             homeLabel = new JLabel(new ImageIcon(logoImage));
             ImageIcon appLogoIcon = new ImageIcon(logoURL);
             Image appLogoImage = appLogoIcon.getImage();
@@ -40,65 +50,168 @@ public class UiMain extends JFrame {
         }
 
         homeLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        homeLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+        homeLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
                 showRecommendationPage();
             }
-        });
 
-        // Load the authentication logo from resources
-        URL AuthLogoURL = getClass().getClassLoader().getResource("auth_logo.png");
-        if (AuthLogoURL != null) {
-            ImageIcon authIcon = new ImageIcon(AuthLogoURL);
-            Image authImage = authIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH); // Agrandir le logo pour une meilleure visibilité
-            authLabel = new JLabel(new ImageIcon(authImage));
-        } else {
-        	authLabel = new JLabel("Auth");
-        }
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                homeLabel.setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
+            }
 
-        authLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        authLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                showAuthenticationPage(); // call method to display the authentication panel
+            @Override
+            public void mouseExited(MouseEvent e) {
+                homeLabel.setBorder(null);
             }
         });
-        // Top panel with the Home logo, search bar, and authentication logo
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(homeLabel, BorderLayout.WEST); // add home logo to the left
-        
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0)); // create panel for search and auth logo
-        rightPanel.add(searchPanel = new SearchPanel());
-        rightPanel.add(authLabel);
-        
-        topPanel.add(rightPanel, BorderLayout.EAST); // add panel containing auth and search logos
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-      
-        add(topPanel, BorderLayout.NORTH); // add the top panel to the frame
+        // Initialize the header panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(50, 50, 50));
+
+        // Navigation panel for readlist and wishlist
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        navPanel.setBackground(new Color(50, 50, 50));
+        JLabel libraryLabel = createHeaderLabel("Library");
+        JLabel readlistLabel = createHeaderLabel("Readlist");
+        JLabel wishlistLabel = createHeaderLabel("Wishlist");
+        navPanel.add(homeLabel);
+        navPanel.add(libraryLabel);
+        navPanel.add(readlistLabel);
+        navPanel.add(wishlistLabel);
+
+        // Custom search field
+        customSearchField = new CustomSearchField();
+
+        // Profile Icon Button
+        URL profileURL = getClass().getClassLoader().getResource("profile.png");
+        if (profileURL != null) {
+            ImageIcon profileIconImage = new ImageIcon(profileURL);
+            Image profileImage = profileIconImage.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            profileButton = new JButton(new ImageIcon(profileImage));
+            profileButton.setPreferredSize(new Dimension(40, 40));
+            profileButton.setFocusPainted(false);
+            profileButton.setBorderPainted(false);
+            profileButton.setContentAreaFilled(false);
+            profileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            profileButton.addActionListener(e -> new LoginForm(this).setVisible(true));
+        } else {
+            System.err.println("Profile image not found.");
+            profileButton = new JButton("Profile");
+        }
+
+        profileLabel = new JLabel();
+        profileLabel.setForeground(Color.WHITE);
+
+        // Panel to hold search field and profile button
+        searchProfilePanel = new JPanel();
+        searchProfilePanel.setLayout(new BoxLayout(searchProfilePanel, BoxLayout.X_AXIS));
+        searchProfilePanel.setBackground(new Color(50, 50, 50));
+        searchProfilePanel.add(customSearchField);
+        searchProfilePanel.add(Box.createRigidArea(new Dimension(10, 0))); // Add space between components
+        searchProfilePanel.add(profileButton);
+
+        // Add components to header panel
+        headerPanel.add(navPanel, BorderLayout.WEST);
+        headerPanel.add(searchProfilePanel, BorderLayout.EAST);
+
+        // Top panel to hold the header
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(50, 50, 50));
+        topPanel.add(headerPanel, BorderLayout.CENTER);
+
+        // Set margin around top panel elements
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
+
+        add(topPanel, BorderLayout.NORTH);
 
         // Initialize the panels
         recommendationPanel = new RecommendationPanel();
         searchResultsPanel = new SearchResultsPanel();
-        authenticationPanel = new AuthenticationPanel();
         comicDetailsPanel = new ComicDetailsPanel();
 
         // Container for switching between panels
         containerPanel = new JPanel(cardLayout);
         containerPanel.add(recommendationPanel, "Recommendation");
         containerPanel.add(searchResultsPanel, "SearchResults");
-        containerPanel.add(authenticationPanel,"Authentication");
         containerPanel.add(comicDetailsPanel, "ComicDetails");
 
         add(containerPanel, BorderLayout.CENTER);
 
-        comicDetailsPanel.addBackButtonListener(e -> showPreviousPanel());
-
         setVisible(true);
+    }
+
+    private JLabel createHeaderLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Arial", Font.PLAIN, 16)); // Adjust font size
+        label.setForeground(Color.WHITE);
+        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                label.setText("<html><u>" + text + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                label.setText(text);
+            }
+        });
+        return label;
     }
 
     public void displaySearchResults(String searchText, String searchType) {
         searchResultsPanel.displayResults(searchText, searchType);
         cardLayout.show(containerPanel, "SearchResults");
+    }
+
+    private void showRecommendationPage() {
+        cardLayout.show(containerPanel, "Recommendation");
+        containerPanel.revalidate();
+        containerPanel.repaint();
+    }
+
+    public void updateProfile(String username) {
+        profileLabel.setText("Hey, " + username);
+        profileLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        profileLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                logout();
+            }
+        });
+
+        searchProfilePanel.remove(profileButton);
+        searchProfilePanel.add(profileLabel);
+        searchProfilePanel.add(Box.createRigidArea(new Dimension(10, 0))); // Add space between components
+        JLabel logoutLabel = new JLabel("Disconnect");
+        logoutLabel.setForeground(Color.RED);
+        logoutLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                logout();
+            }
+        });
+        searchProfilePanel.add(logoutLabel);
+        searchProfilePanel.revalidate();
+        searchProfilePanel.repaint();
+
+        recommendationPanel.updateLibraryMessage(true);
+    }
+
+    private void logout() {
+        profileLabel.setText("");
+        searchProfilePanel.removeAll();
+        searchProfilePanel.add(customSearchField);
+        searchProfilePanel.add(Box.createRigidArea(new Dimension(10, 0))); // Add space between components
+        searchProfilePanel.add(profileButton);
+        searchProfilePanel.revalidate();
+        searchProfilePanel.repaint();
+
+        recommendationPanel.updateLibraryMessage(false);
     }
 
     public void displayComicDetails(Comic comic, String sourcePanel) {
@@ -107,19 +220,7 @@ public class UiMain extends JFrame {
         cardLayout.show(containerPanel, "ComicDetails");
     }
 
-    private void showRecommendationPage() {
-        cardLayout.show(containerPanel, "Recommendation");
-        containerPanel.revalidate();
-        containerPanel.repaint();
-    }
-    
-    private void showAuthenticationPage() {
-    	cardLayout.show(containerPanel, "Authentication");
-        containerPanel.revalidate();
-        containerPanel.repaint();
-        }
-
-    private void showPreviousPanel() {
+    public void showPreviousPanel() {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
         cardLayout.show(containerPanel, previousPanel);
     }
