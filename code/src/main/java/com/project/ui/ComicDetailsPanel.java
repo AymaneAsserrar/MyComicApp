@@ -3,6 +3,7 @@ package com.project.ui;
 import com.project.model.Comic;
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 import java.net.URL;
 
 public class ComicDetailsPanel extends JPanel {
@@ -14,7 +15,6 @@ public class ComicDetailsPanel extends JPanel {
     private JTextArea charactersArea;
     private JLabel ratingLabel;
     private JButton backButton;
-    private JPanel mainContent;
     private String previousPanel;
     private JTextArea deckArea;
     private JTextArea teamsArea;
@@ -38,6 +38,10 @@ public class ComicDetailsPanel extends JPanel {
         // Back button with fixed position
         backButton = new JButton("Back");
         backButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        backButton.addActionListener(e -> {
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(ComicDetailsPanel.this);
+            parentFrame.showPreviousPanel();
+        });
         
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -143,7 +147,7 @@ public void displayComicDetails(Comic comic) {
     titleLabel.setText(comic.getName());
 
     try {
-        URL imageURL = new URL(comic.getCoverImageUrl());
+        URL imageURL = new URI(comic.getCoverImageUrl()).toURL();
         ImageIcon icon = new ImageIcon(imageURL);
         Image img = icon.getImage().getScaledInstance(300, 450, Image.SCALE_SMOOTH);
         coverLabel.setIcon(new ImageIcon(img));
@@ -184,10 +188,6 @@ public void displayComicDetails(Comic comic) {
     repaint();
 }
     
-    public void addBackButtonListener(java.awt.event.ActionListener listener) {
-        backButton.addActionListener(listener);
-    }
-
     public void setPreviousPanel(String panel) {
         this.previousPanel = panel;
     }

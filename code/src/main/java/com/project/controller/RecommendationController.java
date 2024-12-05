@@ -31,8 +31,8 @@ public class RecommendationController {
         return api.parseComicDetails(resultsObject);
     }
     // Méthode pour obtenir la liste des recommandations de comics populaires avec une limite configurable
-    public List<Comic> getPopularComics(int limit) {
-        String jsonResponse = api.getPopularComics(limit);
+    public List<Comic> getPopularComics(int offset, int limit) {
+        String jsonResponse = api.getPopularComics(offset, limit);
         if (jsonResponse == null) {
             return new ArrayList<>();
         }

@@ -27,31 +27,32 @@ public class API {
                 .build();
     }
 
-	public String getPopularComics(int limit) {
-		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
-		"date_added,date_last_updated,first_issue,last_issue," +
-		"publisher,start_year,team_credits,rating";
+	public String getPopularComics(int offset, int limit) {
+        String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
+                "date_added,date_last_updated,first_issue,last_issue," +
+                "publisher,start_year,team_credits,rating";
 
-		String endpoint = "volumes/?api_key=" + API_KEY 
-				+ "&format=json&sort=date_added:desc&limit=" + limit 
-				+ "&field_list=" + fieldList;
-		String url = BASE_URL + endpoint;
-	
-		Request request = new Request.Builder()
-				.url(url)
-				.header("User-Agent", "ComicApp/1.0")
-				.build();
-	
-		try (Response response = client.newCall(request).execute()) {
-			if (!response.isSuccessful()) {
-				throw new IOException("Request error: HTTP Code " + response.code());
-			}
-			return response.body() != null ? response.body().string() : null;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+        String endpoint = "volumes/?api_key=" + API_KEY 
+                + "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit 
+                + "&field_list=" + fieldList;
+        String url = BASE_URL + endpoint;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", "ComicApp/1.0")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Request error: HTTP Code " + response.code());
+            }
+            return response.body() != null ? response.body().string() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 	
 	public String getComicDetails(int comicId) {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
