@@ -117,9 +117,21 @@ public class LoginForm extends JDialog {
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
         errorLabel.setVisible(false);
+
+        if (!isValidEmail(email)) {
+            showError("Invalid email format");
+        }
     }
 
     private void validateAndLogin(JFrame parent) {
+        String email = emailField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        if (!isValidEmail(email)) {
+            showError("Invalid email format");
+            return;
+        }
+
         // Validate against database (US.5.1)
     }
 
