@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.project.api.API;
 import com.project.model.Comic;
+import com.project.model.Hero;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +18,10 @@ public class SearchController {
         this.api = new API();
     }
 
-    public List<Comic> searchComicsByTitle(String title) {
+    public SearchResult searchComicsByTitle(String title, int page, int limit) {
         String jsonResponse = api.searchComicsByTitle(title);
         if (jsonResponse == null) {
-            return new ArrayList<>();
+            return new SearchResult(new ArrayList<>(), 0);
         }
 
         List<Comic> comicsList = new ArrayList<>();
@@ -28,6 +29,7 @@ public class SearchController {
 
         JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
         JsonArray resultsArray = responseObject.getAsJsonArray("results");
+        int totalResults = responseObject.get("number_of_total_results").getAsInt();
 
         for (JsonElement element : resultsArray) {
             JsonObject volumeJson = element.getAsJsonObject();
@@ -61,11 +63,77 @@ public class SearchController {
             comicsList.add(comic);
         }
 
-        return comicsList;
+        return new SearchResult(comicsList, totalResults);
     }
 
-    // Placeholder for character search (not yet implemented)
-    public List<Comic> searchCharactersByName(String name) {
-        return new ArrayList<>();
+    public SearchResult searchCharactersByName(String name) {
+        String jsonResponse = api.fetchCharacterData(name);
+        if (jsonResponse == null) {
+            return new SearchResult(new ArrayList<>(), 0);
+        }
+
+        List<Hero> heroesList = new ArrayList<>();
+        Gson gson = new Gson();
+
+        JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonArray resultsArray = responseObject.getAsJsonArray("results");
+        int totalResults = responseObject.get("number_of_total_results").getAsInt();
+
+        int limit = 12; // Limit the results to 12
+        int count = 0;
+
+        for (JsonElement element : resultsArray) {
+            if (count >= limit) break;
+            JsonObject volumeJson = element.getAsJsonObject();
+
+            Hero hero = new Hero();
+            hero.setId(volumeJson.get("id").getAsInt());
+
+            if (volumeJson.has("name") && !volumeJson.get("name").isJsonNull()) {
+                hero.setName(volumeJson.get("name").getAsString());
+            } else {
+                hero.setName("Unknown Character");
+            }
+
+            if (volumeJson.has("image") && !volumeJson.get("image").isJsonNull()) {
+                JsonObject imageJson = volumeJson.getAsJsonObject("image");
+                if (imageJson.has("medium_url") && !imageJson.get("medium_url").isJsonNull()) {
+                    hero.setImageUrl(imageJson.get("medium_url").getAsString());
+                } else {
+                    hero.setImageUrl("https://via.placeholder.com/150");
+                }
+            } else {
+                hero.setImageUrl("https://via.placeholder.com/150");
+            }
+
+            if (volumeJson.has("description") && !volumeJson.get("description").isJsonNull()) {
+                hero.setDescription(volumeJson.get("description").getAsString());
+            } else {
+                hero.setDescription("No description available.");
+            }
+
+            heroesList.add(hero);
+            count++;
+        }
+
+        return new SearchResult(heroesList, totalResults);
+    }
+
+    public static class SearchResult {
+        private List<?> results;
+        private int totalResults;
+
+        public SearchResult(List<?> results, int totalResults) {
+            this.results = results;
+            this.totalResults = totalResults;
+        }
+
+        public List<?> getResults() {
+            return results;
+        }
+
+        public int getTotalResults() {
+            return totalResults;
+        }
     }
 }

@@ -1,7 +1,6 @@
 package com.project.model;
 
-
-public class Character {
+public class Hero {
     private int id; // Unique identifier for the character
     private String name; // Character's name (e.g., "Batman")
     private String realName; // Real name of the character (e.g., "Bruce Wayne")
