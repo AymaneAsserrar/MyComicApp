@@ -102,8 +102,11 @@ public class SearchResultsPanel extends JPanel {
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(SearchResultsPanel.this);
-                parentFrame.displayComicDetails(comic, "SearchResults");
+                Comic detailedComic = searchController.getComicDetails(comic.getId());
+                if (detailedComic != null) {
+                    UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(SearchResultsPanel.this);
+                    parentFrame.displayComicDetails(detailedComic, "SearchResults");
+                }
             }
         });
         

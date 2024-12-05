@@ -67,8 +67,11 @@ public class RecommendationPanel extends JPanel {
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
-                parentFrame.displayComicDetails(comic, "Recommendation");
+                Comic detailedComic = recommendationController.getComicDetails(comic.getId());
+                if (detailedComic != null) {
+                    UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                    parentFrame.displayComicDetails(detailedComic, "Recommendation");
+                }
             }
         });
         

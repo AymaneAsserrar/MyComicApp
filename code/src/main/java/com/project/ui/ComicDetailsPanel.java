@@ -17,13 +17,16 @@ public class ComicDetailsPanel extends JPanel {
     private JPanel mainContent;
     private String previousPanel;
     private JTextArea deckArea;
+    private JTextArea teamsArea;
+    private JTextArea issueInfoArea;
+    private JTextArea datesArea;
+    private JScrollPane scrollPane;
 
     public ComicDetailsPanel() {
         setLayout(new BorderLayout());
         
-        // Initialize main scrollable container
-        mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
+        // Initialize main content
+        JPanel contentSection = new JPanel(new GridBagLayout());
         
         // Title section with responsive margins
         JPanel titleSection = new JPanel();
@@ -42,7 +45,6 @@ public class ComicDetailsPanel extends JPanel {
         topPanel.add(titleLabel, BorderLayout.CENTER);
         
         // Content section with responsive layout
-        JPanel contentSection = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
         // Cover image panel (left side)
@@ -68,33 +70,39 @@ public class ComicDetailsPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
         
         // Wrap content in scroll pane
-        JScrollPane scrollPane = new JScrollPane(contentSection);
+        scrollPane = new JScrollPane(contentSection);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    private JPanel createDetailsPanel() {
-        JPanel detailsPanel = new JPanel();
-        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-        
-        // Configure text areas
-        deckArea = createTextArea(true);
-        authorsArea = createTextArea(false);
-        descriptionArea = createTextArea(true);
-        charactersArea = createTextArea(false);
-        ratingLabel = new JLabel();
-        ratingLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+private JPanel createDetailsPanel() {
+    JPanel detailsPanel = new JPanel();
+    detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+    
+    // Configure text areas
+    deckArea = createTextArea(true);
+    authorsArea = createTextArea(false);
+    descriptionArea = createTextArea(true);
+    charactersArea = createTextArea(false);
+    teamsArea = createTextArea(false);
+    issueInfoArea = createTextArea(false);
+    datesArea = createTextArea(false);
+    ratingLabel = new JLabel();
+    ratingLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        // Add sections with headers
-        addSection(detailsPanel, "Quick Summary", deckArea);
-        addSection(detailsPanel, "Authors", authorsArea);
-        addSection(detailsPanel, "Rating", ratingLabel);
-        addSection(detailsPanel, "Description", descriptionArea);
-        addSection(detailsPanel, "Characters", charactersArea);
+    // Add sections with headers
+    addSection(detailsPanel, "Quick Summary", deckArea);
+    addSection(detailsPanel, "Publisher", authorsArea);
+    addSection(detailsPanel, "Issue Information", issueInfoArea);
+    addSection(detailsPanel, "Published", datesArea);
+    addSection(detailsPanel, "Description", descriptionArea);
+    addSection(detailsPanel, "Characters", charactersArea);
+    addSection(detailsPanel, "Teams", teamsArea);
+    addSection(detailsPanel, "Rating", ratingLabel);
 
-        return detailsPanel;
-    }
+    return detailsPanel;
+}
 
     private JTextArea createTextArea(boolean multiline) {
         JTextArea area = new JTextArea();
@@ -131,37 +139,50 @@ public class ComicDetailsPanel extends JPanel {
         }
     }
 
-    public void displayComicDetails(Comic comic) {
-        titleLabel.setText(comic.getName());
-        
-        try {
-            URL imageURL = new URL(comic.getCoverImageUrl());
-            ImageIcon icon = new ImageIcon(imageURL);
-            Image img = icon.getImage().getScaledInstance(300, 450, Image.SCALE_SMOOTH);
-            coverLabel.setIcon(new ImageIcon(img));
-        } catch (Exception e) {
-            coverLabel.setIcon(null);
-            coverLabel.setText("Image unavailable");
-        }
-        
-        // Display deck (short description)
-        deckArea.setText(comic.getDeck());
-        
-        // Display authors
-        authorsArea.setText(comic.getAuthorsAsString());
-        
-        // Display rating
-        ratingLabel.setText(comic.getRating() != null ? comic.getRating() : "N/A");
-        
-        // Display description
-        descriptionArea.setText(comic.getDescription());
-        
-        // Display characters
-        charactersArea.setText(comic.getCharactersAsString());
-        
-        revalidate();
-        repaint();
+public void displayComicDetails(Comic comic) {
+    titleLabel.setText(comic.getName());
+
+    try {
+        URL imageURL = new URL(comic.getCoverImageUrl());
+        ImageIcon icon = new ImageIcon(imageURL);
+        Image img = icon.getImage().getScaledInstance(300, 450, Image.SCALE_SMOOTH);
+        coverLabel.setIcon(new ImageIcon(img));
+    } catch (Exception e) {
+        coverLabel.setIcon(null);
+        coverLabel.setText("Image unavailable");
     }
+
+    // Display other comic details...
+    deckArea.setText(comic.getDeck());
+    authorsArea.setText(comic.getPublisherName());
+    
+    String issueInfo = String.format("Issues: %d\nFirst Issue: %s\nLast Issue: %s\nStart Year: %s",
+        comic.getIssueCount(),
+        comic.getFirstIssue(),
+        comic.getLastIssue(),
+        comic.getStartYear());
+    issueInfoArea.setText(issueInfo);
+
+    String dates = String.format("Added: %s\nLast Updated: %s",
+        comic.getDateAdded(),
+        comic.getDateLastUpdated());
+    datesArea.setText(dates);
+
+    descriptionArea.setText(comic.getDescription());
+    charactersArea.setText(comic.getCharactersAsString());
+    teamsArea.setText(comic.getTeamsAsString());
+
+    // **Reset scroll position to top**
+    SwingUtilities.invokeLater(() -> {
+        if (scrollPane != null && scrollPane.getVerticalScrollBar() != null) {
+            scrollPane.getVerticalScrollBar().setValue(0);
+            scrollPane.getHorizontalScrollBar().setValue(0);
+        }
+    });
+
+    revalidate();
+    repaint();
+}
     
     public void addBackButtonListener(java.awt.event.ActionListener listener) {
         backButton.addActionListener(listener);
