@@ -10,12 +10,13 @@ public class ComicDetailsPanel extends JPanel {
     private JLabel titleLabel;
     private JLabel coverLabel; 
     private JTextArea descriptionArea;
-    private JLabel authorsLabel;
+    private JTextArea authorsArea;
     private JTextArea charactersArea;
     private JLabel ratingLabel;
     private JButton backButton;
     private JPanel mainContent;
     private String previousPanel;
+    private JTextArea deckArea;
 
     public ComicDetailsPanel() {
         setLayout(new BorderLayout());
@@ -45,11 +46,22 @@ public class ComicDetailsPanel extends JPanel {
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         
+        // Short description (deck)
+        JLabel deckHeader = new JLabel("Quick Summary");
+        deckHeader.setFont(new Font("Arial", Font.BOLD, 16));
+        deckArea = new JTextArea();
+        deckArea.setEditable(false);
+        deckArea.setLineWrap(true);
+        deckArea.setWrapStyleWord(true);
+        deckArea.setFont(new Font("Arial", Font.ITALIC, 14));
+        
         // Authors section
         JLabel authorsHeader = new JLabel("Authors");
         authorsHeader.setFont(new Font("Arial", Font.BOLD, 16));
-        authorsLabel = new JLabel();
-        authorsLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        authorsArea = new JTextArea();
+        authorsArea.setEditable(false);
+        authorsArea.setLineWrap(true);
+        authorsArea.setFont(new Font("Arial", Font.PLAIN, 14));
         
         // Rating section
         JLabel ratingHeader = new JLabel("Rating/Popularity");
@@ -80,8 +92,11 @@ public class ComicDetailsPanel extends JPanel {
         charScrollPane.setPreferredSize(new Dimension(400, 100));
 
         // Add components to details panel
+        detailsPanel.add(deckHeader);
+        detailsPanel.add(deckArea);
+        detailsPanel.add(Box.createVerticalStrut(10));
         detailsPanel.add(authorsHeader);
-        detailsPanel.add(authorsLabel);
+        detailsPanel.add(authorsArea);
         detailsPanel.add(Box.createVerticalStrut(10));
         detailsPanel.add(ratingHeader);
         detailsPanel.add(ratingLabel);
@@ -119,9 +134,19 @@ public class ComicDetailsPanel extends JPanel {
             coverLabel.setText("Image unavailable");
         }
         
-        authorsLabel.setText(comic.getAuthors() != null ? comic.getAuthors() : "Unknown");
+        // Display deck (short description)
+        deckArea.setText(comic.getDeck());
+        
+        // Display authors
+        authorsArea.setText(comic.getAuthorsAsString());
+        
+        // Display rating
         ratingLabel.setText(comic.getRating() != null ? comic.getRating() : "N/A");
+        
+        // Display description
         descriptionArea.setText(comic.getDescription());
+        
+        // Display characters
         charactersArea.setText(comic.getCharactersAsString());
         
         revalidate();

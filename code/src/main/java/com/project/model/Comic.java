@@ -8,12 +8,13 @@ public class Comic {
     private String name;
     private String description;
     private String coverImageUrl;
-    private String authors;
+    private List<String> authors;
     private String rating;
     private List<Character> characters;
+    private String deck;
 
     public Comic() {
-        this.authors = "Unknown";
+        this.authors = new ArrayList<>();
         this.rating = "N/A";
         this.characters = new ArrayList<>();
     }
@@ -51,12 +52,11 @@ public class Comic {
         this.description = cleanDescription(description);
     }
 
-    public String getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(String authors) {
-        this.authors = authors != null ? authors : "Unknown";
+    public String getAuthorsAsString() {
+        if (authors.isEmpty()) {
+            return "Unknown";
+        }
+        return String.join(", ", authors);
     }
 
     public String getRating() {
@@ -96,24 +96,33 @@ public class Comic {
             return "No description available.";
         }
 
-        // Remove HTML tags
-        String cleaned = rawDescription.replaceAll("<[^>]*>", "");
-        
-        // Convert HTML entities
-        cleaned = cleaned.replace("&amp;", "&")
-                        .replace("&lt;", "<")
-                        .replace("&gt;", ">")
-                        .replace("&quot;", "\"")
-                        .replace("&apos;", "'");
-        
-        // Remove extra whitespace
-        cleaned = cleaned.replaceAll("\\s+", " ").trim();
-        
-        // Split into paragraphs and rejoin with proper spacing
-        String[] paragraphs = cleaned.split("\\n");
-        cleaned = String.join("\n\n", paragraphs);
+        // Remove HTML tags and clean entities
+        String cleaned = rawDescription.replaceAll("<[^>]*>", "")
+                                     .replace("&amp;", "&")
+                                     .replace("&lt;", "<")
+                                     .replace("&gt;", ">")
+                                     .replace("&quot;", "\"")
+                                     .replace("&apos;", "'")
+                                     .replaceAll("\\s+", " ")
+                                     .trim();
 
         return cleaned;
+    }
+
+    // Methods for authors
+    public void addAuthor(String author) {
+        if (author != null && !author.isEmpty()) {
+            this.authors.add(author);
+        }
+    }
+
+    // Methods for deck (short description)
+    public String getDeck() {
+        return deck == null ? "" : deck;
+    }
+
+    public void setDeck(String deck) {
+        this.deck = cleanDescription(deck);
     }
 
     @Override
@@ -123,7 +132,7 @@ public class Comic {
                 ", name='" + name + '\'' +
                 ", coverImageUrl='" + coverImageUrl + '\'' +
                 ", description='" + description + '\'' +
-                ", authors='" + authors + '\'' +
+                ", authors='" + getAuthorsAsString() + '\'' +
                 ", rating='" + rating + '\'' +
                 '}';
     }

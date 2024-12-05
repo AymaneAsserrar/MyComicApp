@@ -62,4 +62,25 @@ public class API {
 	        return null;
 	    }
 	}
+	
+	// Method for getting detailed comic info
+    public String getComicDetails(int comicId) {
+        String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY + "&format=json&field_list=name,description,image,characters,people,deck";
+        String url = BASE_URL + endpoint;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", "ComicApp/1.0")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Request error: HTTP Code " + response.code());
+            }
+            return response.body() != null ? response.body().string() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
