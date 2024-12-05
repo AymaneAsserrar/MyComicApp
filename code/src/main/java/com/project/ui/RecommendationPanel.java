@@ -62,6 +62,16 @@ public class RecommendationPanel extends JPanel {
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
         comicPanel.add(logoLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        
+        comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                parentFrame.displayComicDetails(comic, "Recommendation");
+            }
+        });
+        
         comicsGridPanel.add(comicPanel);
     }
 

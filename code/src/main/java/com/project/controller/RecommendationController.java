@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.project.api.API;
 import com.project.model.Comic;
+import com.project.model.Character;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,33 @@ public class RecommendationController {
                 comic.setDescription(volumeJson.get("description").getAsString());
             } else {
                 comic.setDescription("No description available.");
+            }
+
+            // Vérifier si des personnages sont présents
+            if (volumeJson.has("characters") && !volumeJson.get("characters").isJsonNull()) {
+                JsonArray charactersJson = volumeJson.getAsJsonObject("characters").getAsJsonArray("items");
+                List<Character> charactersList = new ArrayList<>();
+                
+                for (JsonElement charElement : charactersJson) {
+                    JsonObject charJson = charElement.getAsJsonObject();
+                    Character character = new Character();
+                    character.setId(charJson.get("id").getAsInt());
+                    character.setName(charJson.get("name").getAsString());
+                    
+                    if (charJson.has("real_name") && !charJson.get("real_name").isJsonNull()) {
+                        character.setRealName(charJson.get("real_name").getAsString());
+                    }
+                    
+                    if (charJson.has("image") && !charJson.get("image").isJsonNull()) {
+                        JsonObject imageJson = charJson.getAsJsonObject("image");
+                        if (imageJson.has("medium_url")) {
+                            character.setImageUrl(imageJson.get("medium_url").getAsString());
+                        }
+                    }
+                    
+                    charactersList.add(character);
+                }
+                comic.setCharacters(charactersList);
             }
 
             // Ajouter le volume à la liste
