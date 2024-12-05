@@ -136,4 +136,18 @@ public class SearchController {
             return totalResults;
         }
     }
+
+
+    public Comic getComicDetails(int comicId) {
+        String jsonResponse = api.getComicDetails(comicId);
+        if (jsonResponse == null) {
+            return null;
+        }
+    
+        Gson gson = new Gson();
+        JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonObject resultsObject = responseObject.getAsJsonObject("results");
+        
+        return api.parseComicDetails(resultsObject);
+    }
 }
