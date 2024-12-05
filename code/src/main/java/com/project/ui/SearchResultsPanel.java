@@ -7,6 +7,8 @@ import com.project.model.Hero;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,92 +17,67 @@ import java.util.Set;
 
 public class SearchResultsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
-    private static final int PAGE_SIZE = 12;
-    private int currentPage = 0;
-    private boolean isLoading = false;
-    private boolean hasMoreResults = true;
     private SearchController searchController;
     private JPanel resultsGridPanel;
     private String currentSearchText;
-    private Set<Integer> displayedComicIds;
+    private String currentSearchType;
+    private JLabel searchResultsLabel;
 
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
 
-        JLabel searchResultsLabel = new JLabel("Comics Found", SwingConstants.CENTER);
+        searchResultsLabel = new JLabel("Comics Found", SwingConstants.CENTER);
         searchResultsLabel.setFont(new Font("Arial", Font.BOLD, 20));
         add(searchResultsLabel, BorderLayout.NORTH);
 
         resultsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5));
         resultsGridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JScrollPane scrollPane = ScrollUtil.createInfiniteScrollPane(resultsGridPanel,
-                offset -> loadMoreResults(offset, currentSearchText));
-
+        JScrollPane scrollPane = new JScrollPane(resultsGridPanel);
         add(scrollPane, BorderLayout.CENTER);
+
         searchController = new SearchController();
-        displayedComicIds = new HashSet<>();
     }
 
     public void displayResults(String searchText, String searchType) {
         currentSearchText = searchText;
-        currentPage = 0;
-        hasMoreResults = true;
-        isLoading = false;
-        displayedComicIds.clear();
+        currentSearchType = searchType;
+        loadResults();
+    }
+
+    private void loadResults() {
+        SearchController.SearchResult searchResult;
+        if ("Comic".equals(currentSearchType)) {
+            searchResult = searchController.searchComicsByTitle(currentSearchText, 0, 10);
+            searchResultsLabel.setText("Comics Found");
+        } else if ("Character".equals(currentSearchType)) {
+            searchResult = searchController.searchCharactersByName(currentSearchText);
+            searchResultsLabel.setText("Characters Found");
+        } else {
+            searchResult = new SearchController.SearchResult(new ArrayList<>(), 0);
+        }
+
+        List<?> searchResults = searchResult.getResults();
+
         resultsGridPanel.removeAll();
-        loadMoreResults(0, searchType);
-    }
-
-    private void loadMoreResults(int offset, String searchType) {
-        if (isLoading || !hasMoreResults || currentSearchText == null || currentSearchText.isEmpty()) {
-            return;
-        }
-
-        isLoading = true;
-        currentPage = offset / PAGE_SIZE;
-
-        if ("Comic".equals(searchType)) {
-            List<Comic> searchResults = searchController.searchComicsByTitle(currentSearchText);
-            processComics(searchResults);
-        } else if ("Character".equals(searchType)) {
-            List<Hero> searchResults = searchController.searchCharactersByName(currentSearchText);
-            processHeroes(searchResults);
+        if (searchResults.isEmpty()) {
+            searchResultsLabel.setText("No results found");
         } else {
-            hasMoreResults = false;
-        }
-
-        isLoading = false;
-    }
-
-    private void processComics(List<Comic> comics) {
-        if (comics.isEmpty()) {
-            hasMoreResults = false;
-        } else {
-            for (Comic comic : comics) {
-                if (!displayedComicIds.contains(comic.getId())) {
-                    addComicPanel(comic);
-                    displayedComicIds.add(comic.getId());
+            if ("Comic".equals(currentSearchType)) {
+                for (Object result : searchResults) {
+                    addComicPanel((Comic) result);
+                }
+            } else if ("Character".equals(currentSearchType)) {
+                for (Object result : searchResults) {
+                    addHeroPanel((Hero) result);
                 }
             }
-            revalidate();
-            repaint();
         }
-    }
 
-    private void processHeroes(List<Hero> heroes) {
-        if (heroes.isEmpty()) {
-            hasMoreResults = false;
-        } else {
-            for (Hero hero : heroes) {
-                if (!displayedComicIds.contains(hero.getId())) { // Assuming Hero has getId()
-                    addHeroPanel(hero);
-                    displayedComicIds.add(hero.getId());
-                }
-            }
-            revalidate();
-            repaint();
-        }
+        resultsGridPanel.revalidate();
+        resultsGridPanel.repaint();
+        revalidate();
+        repaint();
     }
 
     private void addComicPanel(Comic comic) {

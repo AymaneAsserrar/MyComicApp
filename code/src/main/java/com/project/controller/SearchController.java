@@ -18,10 +18,10 @@ public class SearchController {
         this.api = new API();
     }
 
-    public List<Comic> searchComicsByTitle(String title) {
+    public SearchResult searchComicsByTitle(String title, int page, int limit) {
         String jsonResponse = api.searchComicsByTitle(title);
         if (jsonResponse == null) {
-            return new ArrayList<>();
+            return new SearchResult(new ArrayList<>(), 0);
         }
 
         List<Comic> comicsList = new ArrayList<>();
@@ -29,6 +29,7 @@ public class SearchController {
 
         JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
         JsonArray resultsArray = responseObject.getAsJsonArray("results");
+        int totalResults = responseObject.get("number_of_total_results").getAsInt();
 
         for (JsonElement element : resultsArray) {
             JsonObject volumeJson = element.getAsJsonObject();
@@ -62,24 +63,27 @@ public class SearchController {
             comicsList.add(comic);
         }
 
-        return comicsList;
+        return new SearchResult(comicsList, totalResults);
     }
 
-    // Placeholder for character search (not yet implemented)
-    public List<Hero> searchCharactersByName(String name) {
-
+    public SearchResult searchCharactersByName(String name) {
         String jsonResponse = api.fetchCharacterData(name);
         if (jsonResponse == null) {
-            return new ArrayList<>();
+            return new SearchResult(new ArrayList<>(), 0);
         }
 
-        List<Hero> herosList = new ArrayList<>();
+        List<Hero> heroesList = new ArrayList<>();
         Gson gson = new Gson();
 
         JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
         JsonArray resultsArray = responseObject.getAsJsonArray("results");
+        int totalResults = responseObject.get("number_of_total_results").getAsInt();
+
+        int limit = 12; // Limit the results to 12
+        int count = 0;
 
         for (JsonElement element : resultsArray) {
+            if (count >= limit) break;
             JsonObject volumeJson = element.getAsJsonObject();
 
             Hero hero = new Hero();
@@ -108,9 +112,28 @@ public class SearchController {
                 hero.setDescription("No description available.");
             }
 
-            herosList.add(hero);
+            heroesList.add(hero);
+            count++;
         }
 
-        return herosList;
+        return new SearchResult(heroesList, totalResults);
+    }
+
+    public static class SearchResult {
+        private List<?> results;
+        private int totalResults;
+
+        public SearchResult(List<?> results, int totalResults) {
+            this.results = results;
+            this.totalResults = totalResults;
+        }
+
+        public List<?> getResults() {
+            return results;
+        }
+
+        public int getTotalResults() {
+            return totalResults;
+        }
     }
 }

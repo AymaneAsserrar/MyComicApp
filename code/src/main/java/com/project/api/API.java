@@ -83,4 +83,26 @@ public class API {
 			return null;
 		}
 	}
+
+	// Méthode pour chercher des personnages avec offset et limite
+	public String fetchCharacterData(String name, int offset, int limit) {
+		String endpoint = String.format("characters/?api_key=%s&format=json&filter=name:%s&offset=%d&limit=%d",
+				API_KEY, name, offset, limit);
+		String url = BASE_URL + endpoint;
+
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
+			}
+			return response.body() != null ? response.body().string() : null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
