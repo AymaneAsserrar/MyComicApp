@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.project.api.API;
 import com.project.model.Comic;
-import com.project.model.Character;
+import com.project.model.Hero;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,16 +69,16 @@ public class RecommendationController {
         // Parse characters
         if (volumeJson.has("characters") && !volumeJson.get("characters").isJsonNull()) {
             JsonArray charactersArray = volumeJson.getAsJsonArray("characters");
-            List<Character> charactersList = new ArrayList<>();
+            List<Hero> charactersList = new ArrayList<>();
             for (JsonElement charElement : charactersArray) {
                 JsonObject charJson = charElement.getAsJsonObject();
-                Character character = new Character();
+                Hero character = new Hero();
                 character.setId(charJson.get("id").getAsInt());
                 character.setName(getJsonString(charJson, "name", ""));
                 character.setRealName(getJsonString(charJson, "real_name", ""));
                 charactersList.add(character);
             }
-            comic.setCharacters(charactersList);
+            comic.setHeroes(charactersList);
         }
 
         return comic;

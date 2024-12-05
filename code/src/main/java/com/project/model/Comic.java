@@ -10,13 +10,13 @@ public class Comic {
     private String coverImageUrl;
     private List<String> authors;
     private String rating;
-    private List<Character> characters;
+    private List<Hero> heroes;
     private String deck;
 
     public Comic() {
         this.authors = new ArrayList<>();
         this.rating = "N/A";
-        this.characters = new ArrayList<>();
+        this.heroes = new ArrayList<>();
     }
 
     // Getters et setters
@@ -67,24 +67,24 @@ public class Comic {
         this.rating = rating != null ? rating : "N/A";
     }
 
-    public List<Character> getCharacters() {
-        return characters;
+    public List<Hero> getHero() {
+        return heroes;
     }
 
-    public void setCharacters(List<Character> characters) {
-        this.characters = characters != null ? characters : new ArrayList<>();
+    public void setHeroes(List<Hero> charactersList) {
+        this.heroes = charactersList != null ? charactersList : new ArrayList<>();
     }
 
     public String getCharactersAsString() {
-        if (characters == null || characters.isEmpty()) {
+        if (heroes == null || heroes.isEmpty()) {
             return "No characters available";
         }
         
         StringBuilder sb = new StringBuilder();
-        for (Character character : characters) {
-            sb.append("• ").append(character.getName());
-            if (character.getRealName() != null && !character.getRealName().isEmpty()) {
-                sb.append(" (").append(character.getRealName()).append(")");
+        for (Hero hero : heroes) {
+            sb.append("• ").append(hero.getName());
+            if (hero.getRealName() != null && !hero.getRealName().isEmpty()) {
+                sb.append(" (").append(hero.getRealName()).append(")");
             }
             sb.append("\n");
         }
