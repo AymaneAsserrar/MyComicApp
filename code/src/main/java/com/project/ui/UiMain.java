@@ -11,7 +11,9 @@ public class UiMain extends JFrame {
     private RecommendationPanel recommendationPanel;
     private SearchPanel searchPanel;
     private SearchResultsPanel searchResultsPanel;
+    private AuthenticationPanel authenticationPanel;
     private JLabel homeLabel;
+    private JLabel authLabel;
     private CardLayout cardLayout;
     private JPanel containerPanel;
     private ComicDetailsPanel comicDetailsPanel;
@@ -44,25 +46,47 @@ public class UiMain extends JFrame {
             }
         });
 
-        // Top panel with the Home logo and search bar
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(homeLabel, BorderLayout.WEST);
-        topPanel.add(searchPanel = new SearchPanel(), BorderLayout.EAST); // Search Panel à droite
+        // Load the authentication logo from resources
+        URL AuthLogoURL = getClass().getClassLoader().getResource("auth_logo.png");
+        if (AuthLogoURL != null) {
+            ImageIcon authIcon = new ImageIcon(AuthLogoURL);
+            Image authImage = authIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH); // Agrandir le logo pour une meilleure visibilité
+            authLabel = new JLabel(new ImageIcon(authImage));
+        } else {
+        	authLabel = new JLabel("Auth");
+        }
 
-        // Set margin around top panel elements
+        authLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        authLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                showAuthenticationPage(); // call method to display the authentication panel
+            }
+        });
+        // Top panel with the Home logo, search bar, and authentication logo
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(homeLabel, BorderLayout.WEST); // add home logo to the left
+        
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0)); // create panel for search and auth logo
+        rightPanel.add(searchPanel = new SearchPanel());
+        rightPanel.add(authLabel);
+        
+        topPanel.add(rightPanel, BorderLayout.EAST); // add panel containing auth and search logos
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        add(topPanel, BorderLayout.NORTH);
+      
+        add(topPanel, BorderLayout.NORTH); // add the top panel to the frame
 
         // Initialize the panels
         recommendationPanel = new RecommendationPanel();
         searchResultsPanel = new SearchResultsPanel();
+        authenticationPanel = new AuthenticationPanel();
         comicDetailsPanel = new ComicDetailsPanel();
 
         // Container for switching between panels
         containerPanel = new JPanel(cardLayout);
         containerPanel.add(recommendationPanel, "Recommendation");
         containerPanel.add(searchResultsPanel, "SearchResults");
+        containerPanel.add(authenticationPanel,"Authentication");
         containerPanel.add(comicDetailsPanel, "ComicDetails");
 
         add(containerPanel, BorderLayout.CENTER);
@@ -88,6 +112,12 @@ public class UiMain extends JFrame {
         containerPanel.revalidate();
         containerPanel.repaint();
     }
+    
+    private void showAuthenticationPage() {
+    	cardLayout.show(containerPanel, "Authentication");
+        containerPanel.revalidate();
+        containerPanel.repaint();
+        }
 
     private void showPreviousPanel() {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
