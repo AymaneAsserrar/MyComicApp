@@ -65,7 +65,7 @@ public class API {
 
 	// Méthode pour chercher des personnages
 	public String fetchCharacterData(String name) {
-		String endpoint = "characters/?api_key=" + API_KEY + "&format=json&filter=name:" + name;
+		String endpoint = "characters/?api_key=" + API_KEY + "&format=json&limit=10&offset=0&filter=name:" + name;
 		String url = BASE_URL + endpoint;
 
 		Request request = new Request.Builder()
