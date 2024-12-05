@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.project.api.API;
 import com.project.model.Comic;
+import com.project.model.Hero;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,51 @@ public class SearchController {
     }
 
     // Placeholder for character search (not yet implemented)
-    public List<Comic> searchCharactersByName(String name) {
-        return new ArrayList<>();
+    public List<Hero> searchCharactersByName(String name) {
+
+        String jsonResponse = api.fetchCharacterData(name);
+        if (jsonResponse == null) {
+            return new ArrayList<>();
+        }
+
+        List<Hero> herosList = new ArrayList<>();
+        Gson gson = new Gson();
+
+        JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonArray resultsArray = responseObject.getAsJsonArray("results");
+
+        for (JsonElement element : resultsArray) {
+            JsonObject volumeJson = element.getAsJsonObject();
+
+            Hero hero = new Hero();
+            hero.setId(volumeJson.get("id").getAsInt());
+
+            if (volumeJson.has("name") && !volumeJson.get("name").isJsonNull()) {
+                hero.setName(volumeJson.get("name").getAsString());
+            } else {
+                hero.setName("Unknown Character");
+            }
+
+            if (volumeJson.has("image") && !volumeJson.get("image").isJsonNull()) {
+                JsonObject imageJson = volumeJson.getAsJsonObject("image");
+                if (imageJson.has("medium_url") && !imageJson.get("medium_url").isJsonNull()) {
+                    hero.setImageUrl(imageJson.get("medium_url").getAsString());
+                } else {
+                    hero.setImageUrl("https://via.placeholder.com/150");
+                }
+            } else {
+                hero.setImageUrl("https://via.placeholder.com/150");
+            }
+
+            if (volumeJson.has("description") && !volumeJson.get("description").isJsonNull()) {
+                hero.setDescription(volumeJson.get("description").getAsString());
+            } else {
+                hero.setDescription("No description available.");
+            }
+
+            herosList.add(hero);
+        }
+
+        return herosList;
     }
 }
