@@ -2,6 +2,9 @@ package com.project.ui;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
+
+import com.project.controller.UserAuthController;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -127,19 +130,37 @@ public class LoginForm extends JDialog {
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 
+        // Validate email format
         if (!isValidEmail(email)) {
             showError("Invalid email format");
             return;
         }
+        if (!isValidPassword(password)) {
+            showError("Password cannot be empty");
+            return;
+        }
+        
+        // Get the result from UserAuthController
+        String validationMessage = UserAuthController.validateCredentials(email, password);
 
-        // Validate against database (US.5.1)
+        if ("SUCCESS".equals(validationMessage)) {
+            JOptionPane.showMessageDialog(this, "Login successful!");
+        } else {
+            // Display the specific error message from the controller
+            showError(validationMessage);
+        }
     }
+
 
     private boolean isValidEmail(String email) {
         String emailRegex = "^[\\w-\\.]+@[\\w-\\.]+\\.\\w{2,4}$";
         return Pattern.matches(emailRegex, email);
     }
-
+    
+    private boolean isValidPassword(String password) {
+        return password != null && !password.isEmpty();
+    }
+    
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
