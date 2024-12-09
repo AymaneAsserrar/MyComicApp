@@ -1,4 +1,3 @@
-
 import com.project.ui.UiMain;
 
 import javax.swing.*;
