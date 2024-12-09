@@ -1,10 +1,12 @@
 package com.project.model;
 
+import java.sql.Timestamp;
+
 public class User {
     private int id;
     private String email;
     private String passwordHash;
-    private String createdAt;
+    private Timestamp createdAt;
     private int idBiblio;
 
     // Getters and setters
@@ -32,11 +34,11 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
-    public String getCreatedAt() {
+    public Timestamp getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
 
