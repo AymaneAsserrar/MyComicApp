@@ -14,6 +14,7 @@ public class LoginForm extends JDialog {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JLabel errorLabel;
+    private JLabel loggedInLabel;
 
     public LoginForm(JFrame parent) {
         super(parent, "Login", true);
@@ -92,6 +93,11 @@ public class LoginForm extends JDialog {
 
         add(panel);
         addFieldListeners();
+        //Logout button
+        gbc.gridy = 6; // Adjust the grid position
+        loggedInLabel = new JLabel(); 
+        loggedInLabel.setVisible(false); // Initially hidden
+        panel.add(loggedInLabel, gbc);
     }
 
     private void addFieldListeners() {
