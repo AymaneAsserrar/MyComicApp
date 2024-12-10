@@ -15,7 +15,7 @@ public class LoginForm extends JDialog {
     private JPasswordField passwordField;
     private JLabel errorLabel;
     private JLabel loggedInLabel;
-
+    private JButton logoutButton; 
     public LoginForm(JFrame parent) {
         super(parent, "Login", true);
         setSize(400, 400);
@@ -98,6 +98,13 @@ public class LoginForm extends JDialog {
         loggedInLabel = new JLabel(); 
         loggedInLabel.setVisible(false); // Initially hidden
         panel.add(loggedInLabel, gbc);
+        gbc.gridy = 7; // Adjust the grid position
+        logoutButton = new JButton("Logout");
+        logoutButton.setVisible(false); // Initially hidden
+        logoutButton.setBackground(Color.RED);
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+       
     }
 
     private void addFieldListeners() {
