@@ -150,4 +150,21 @@ public class SearchController {
         
         return api.parseComicDetails(resultsObject);
     }
+    
+    public Hero getCharacterDetails(int characterId) {
+        // Appel à l'API pour récupérer les détails bruts JSON
+        String jsonResponse = api.getCharacterDetails(characterId);
+        if (jsonResponse == null) {
+            return null;
+        }
+    
+        // Utilisation de Gson pour parser le JSON en Hero
+        Gson gson = new Gson();
+        JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonObject resultsObject = responseObject.getAsJsonObject("results");
+    
+        // Transformation en objet Hero
+        return api.parseHeroDetails(resultsObject);
+    }
+    
 }
