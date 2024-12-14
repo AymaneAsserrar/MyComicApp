@@ -116,6 +116,8 @@ public class SearchResultsPanel extends JPanel {
     private void addHeroPanel(Hero hero) {
         JPanel comicPanel = new JPanel(new BorderLayout());
         comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel heroPanel = new JPanel(new BorderLayout());
+        heroPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel coverLabel;
         try {
@@ -130,6 +132,16 @@ public class SearchResultsPanel extends JPanel {
         JLabel titleLabel = new JLabel(hero.getName(), SwingConstants.CENTER);
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        // Détecte les clics sur ce panneau pour récupérer les détails du personnage
+        heroPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        heroPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            // Appelle le contrôleur pour récupérer les détails du personnage
+            searchController.fetchCharacterProfile(hero.getId());
+        }
+    });
+
         resultsGridPanel.add(comicPanel);
     }
 }
