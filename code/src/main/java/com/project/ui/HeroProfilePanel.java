@@ -43,8 +43,19 @@ public class HeroProfilePanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    public void updateProfile(String string, String string2, ImageIcon imageIcon, String[] strings) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateProfile'");
+    public void updateProfile(String name, String description, Icon image, String[] titles) {
+        nameLabel.setText(name);
+        descriptionArea.setText(description != null ? description : "N/A");
+        imageLabel.setIcon(image != null ? image : new ImageIcon());
+        titlesList.setListData(titles != null ? titles : new String[]{"No associated titles found"});
+    }
+
+    public JButton getBackButton() {
+        return backButton;
+    }
+
+    public JButton getCloseButton() {
+        return closeButton;
     }
 }
+
