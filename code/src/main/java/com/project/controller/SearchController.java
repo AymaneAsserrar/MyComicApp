@@ -153,7 +153,7 @@ public class SearchController {
     
     public Hero getCharacterDetails(int characterId) {
         // Appel à l'API pour récupérer les détails bruts JSON
-        String jsonResponse = api.getCharacterDetails(characterId);
+        String jsonResponse = api.fetchCharacterDetails(characterId);
         if (jsonResponse == null) {
             return null;
         }
