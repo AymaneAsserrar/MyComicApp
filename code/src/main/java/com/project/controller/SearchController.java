@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchController {
-    private API api;
+    public API api;
 
     public SearchController() {
         this.api = new API();
@@ -152,19 +152,24 @@ public class SearchController {
     }
     
     public Hero getCharacterDetails(int characterId) {
-        // Appel à l'API pour récupérer les détails bruts JSON
-        String jsonResponse = api.fetchCharacterDetails(characterId);
+        String jsonResponse = api.fetchCharacterDetails(characterId); 
         if (jsonResponse == null) {
-            return null;
+            return null; 
         }
-    
-        // Utilisation de Gson pour parser le JSON en Hero
         Gson gson = new Gson();
         JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
-        JsonObject resultsObject = responseObject.getAsJsonObject("results");
+        if (responseObject.has("results") && responseObject.get("results").isJsonObject()) {
+            JsonObject resultsObject = responseObject.getAsJsonObject("results");
+            Hero hero = new Hero();
+            hero.setId(resultsObject.get("id").getAsInt());
+            hero.setName(resultsObject.get("name").getAsString());
+            hero.setDescription(resultsObject.has("description") ? resultsObject.get("description").getAsString() : null);
+            hero.setImageUrl(resultsObject.has("image") ? resultsObject.getAsJsonObject("image").get("original_url").getAsString() : null);
     
-        // Transformation en objet Hero
-        return api.parseHeroDetails(resultsObject);
+            return hero; 
+        }
+    
+        return null; 
     }
     
 }
