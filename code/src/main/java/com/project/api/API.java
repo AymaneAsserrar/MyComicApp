@@ -214,9 +214,9 @@ public class API {
 		}
 	}
 	public String fetchCharacterDetails(int characterId) {
-		String endpoint = "character/" + characterId + "/?api_key=" + API_KEY + "&format=json";
+		String endpoint = "character/4005-" + characterId + "/?api_key=" + API_KEY + "&format=json";
 		String url = BASE_URL + endpoint;
-	
+		
 		Request request = new Request.Builder()
 				.url(url)
 				.header("User-Agent", "ComicApp/1.0")
