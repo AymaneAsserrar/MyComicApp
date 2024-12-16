@@ -42,7 +42,7 @@ public class DatabaseUtil {
                 "email TEXT UNIQUE NOT NULL," +
                 "password_hash TEXT NOT NULL," +
                 "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
-                "id_biblio INTEGER)";
+                "id_biblio INTEGER UNIQUE)";
 
         String createBiblioTable = "CREATE TABLE IF NOT EXISTS biblio (" +
                 "id_biblio INTEGER," +
@@ -55,7 +55,8 @@ public class DatabaseUtil {
                 "id_comic INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "name TEXT NOT NULL," +
                 "description TEXT," +
-                "image TEXT)";
+                "image TEXT,"+
+                "genres TEXT)";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
