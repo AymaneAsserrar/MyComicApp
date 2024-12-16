@@ -14,7 +14,8 @@ public class LoginForm extends JDialog {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JLabel errorLabel;
-
+    private JLabel loggedInLabel;
+    private JButton logoutButton; 
     public LoginForm(JFrame parent) {
         super(parent, "Login", true);
         setSize(400, 400);
@@ -97,6 +98,18 @@ public class LoginForm extends JDialog {
 
         add(panel);
         addFieldListeners();
+        //Logout button
+        gbc.gridy = 6; // Adjust the grid position
+        loggedInLabel = new JLabel(); 
+        loggedInLabel.setVisible(false); // Initially hidden
+        panel.add(loggedInLabel, gbc);
+        gbc.gridy = 7; // Adjust the grid position
+        logoutButton = new JButton("Logout");
+        logoutButton.setVisible(false); // Initially hidden
+        logoutButton.setBackground(Color.RED);
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+       
     }
 
     private void addFieldListeners() {
@@ -150,6 +163,8 @@ public class LoginForm extends JDialog {
 
         if ("SUCCESS".equals(validationMessage)) {
             JOptionPane.showMessageDialog(this, "Login successful!");
+            ((UiMain) parent).updateProfile(email);
+            dispose();
         } else {
             // Display the specific error message from the controller
             showError(validationMessage);
