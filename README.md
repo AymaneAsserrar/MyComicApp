@@ -2,7 +2,7 @@
 
 ## Description
 
-info4 is a Java-based application that utilizes Swing for its user interface and FlatLaf for a modern look and feel. The application also includes database utilities for creating and managing tables.
+We are building a Java-based application that utilizes Swing for its user interface and FlatLaf for a modern look and feel. The application also includes database utilities for creating and managing tables.
 
 ## Features
 
