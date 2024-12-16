@@ -89,6 +89,11 @@ public class LoginForm extends JDialog {
         signUpButton.setForeground(Color.WHITE);
         signUpButton.setFocusPainted(false);
         signUpButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        signUpButton.addActionListener(e -> {
+            SignUpForm signUpForm = new SignUpForm(parent);
+            signUpForm.setVisible(true);
+            dispose(); // Optional: close login form when opening signup
+        });
         panel.add(signUpButton, gbc);
 
         add(panel);
@@ -158,6 +163,8 @@ public class LoginForm extends JDialog {
 
         if ("SUCCESS".equals(validationMessage)) {
             JOptionPane.showMessageDialog(this, "Login successful!");
+            ((UiMain) parent).updateProfile(email);
+            dispose();
         } else {
             // Display the specific error message from the controller
             showError(validationMessage);

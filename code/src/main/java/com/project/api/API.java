@@ -30,7 +30,7 @@ public class API {
 	public String getPopularComics(int offset, int limit) {
         String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
                 "date_added,date_last_updated,first_issue,last_issue," +
-                "publisher,start_year,team_credits,rating";
+                "publisher,start_year,character_credits,rating";
 
         String endpoint = "volumes/?api_key=" + API_KEY 
                 + "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit 
@@ -57,7 +57,7 @@ public class API {
 	public String getComicDetails(int comicId) {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 		"date_added,date_last_updated,first_issue,last_issue," +
-		"publisher,start_year,team_credits,rating";
+		"publisher,start_year,character_credits,rating";
 
 		String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY
 				+ "&format=json&field_list=" + fieldList;

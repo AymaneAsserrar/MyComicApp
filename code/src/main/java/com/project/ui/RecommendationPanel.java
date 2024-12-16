@@ -69,7 +69,7 @@ public class RecommendationPanel extends JPanel {
         libraryPanel.setBackground(new Color(255, 255, 255));
         libraryPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JLabel libraryTitle = new JLabel("Your Library", SwingConstants.CENTER);
+        JLabel libraryTitle = new JLabel("Recommendations", SwingConstants.CENTER);
         libraryTitle.setFont(new Font("Arial", Font.BOLD, 24));
         libraryTitle.setBorder(new EmptyBorder(20, 0, 20, 0));
         libraryPanel.add(libraryTitle, BorderLayout.NORTH);
