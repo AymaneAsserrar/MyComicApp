@@ -1,7 +1,6 @@
 package com.project.ui;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.project.controller.SearchController;
 import com.project.model.Comic;
 import com.project.util.CustomSearchField;
 
@@ -13,6 +12,7 @@ import java.net.URL;
 
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
+    private String currentUserEmail;
 
     private RecommendationPanel recommendationPanel;
     private SearchResultsPanel searchResultsPanel;
@@ -173,8 +173,9 @@ public class UiMain extends JFrame {
         containerPanel.repaint();
     }
 
-    public void updateProfile(String username) {
-        profileLabel.setText("Hey, " + username);
+    public void updateProfile(String email) {
+        this.currentUserEmail = email;
+        profileLabel.setText("Hey, " + email);
         profileLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         profileLabel.addMouseListener(new MouseAdapter() {
             @Override
@@ -203,6 +204,7 @@ public class UiMain extends JFrame {
     }
 
     private void logout() {
+        currentUserEmail = null;
         profileLabel.setText("");
         searchProfilePanel.removeAll();
         searchProfilePanel.add(customSearchField);
@@ -212,6 +214,10 @@ public class UiMain extends JFrame {
         searchProfilePanel.repaint();
 
         recommendationPanel.updateLibraryMessage(false);
+    }
+
+    public String getCurrentUserEmail() {
+        return currentUserEmail;
     }
 
     public void displayComicDetails(Comic comic, String sourcePanel) {

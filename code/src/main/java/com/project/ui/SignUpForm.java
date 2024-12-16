@@ -1,21 +1,28 @@
 package com.project.ui;
 
+import com.project.controller.UserAuthController;
+import com.project.util.EmailUtil;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class SignUpForm extends JDialog {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
-    private JLabel errorLabel;
-    private JButton signUpButton;
+    private static final ConcurrentHashMap<String, String> verificationCodes = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Long> codeExpirationTimes = new ConcurrentHashMap<>();
 
     public SignUpForm(JFrame parent) {
         super(parent, "Sign Up", true);
-        setSize(400, 450);
+        setSize(400, 350);
         setResizable(false);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(parent);
 
         JPanel panel = new JPanel(new GridBagLayout());
@@ -23,7 +30,6 @@ public class SignUpForm extends JDialog {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Email field
         gbc.gridx = 0;
         gbc.gridy = 0;
         panel.add(new JLabel("Email:"), gbc);
@@ -32,7 +38,6 @@ public class SignUpForm extends JDialog {
         emailField = new JTextField(20);
         panel.add(emailField, gbc);
 
-        // Password field
         gbc.gridx = 0;
         gbc.gridy = 1;
         panel.add(new JLabel("Password:"), gbc);
@@ -41,7 +46,6 @@ public class SignUpForm extends JDialog {
         passwordField = new JPasswordField(20);
         panel.add(passwordField, gbc);
 
-        // Confirm Password field
         gbc.gridx = 0;
         gbc.gridy = 2;
         panel.add(new JLabel("Confirm Password:"), gbc);
@@ -50,62 +54,72 @@ public class SignUpForm extends JDialog {
         confirmPasswordField = new JPasswordField(20);
         panel.add(confirmPasswordField, gbc);
 
-        // Error label
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        errorLabel = new JLabel("", SwingConstants.CENTER);
-        errorLabel.setForeground(Color.RED);
-        errorLabel.setVisible(false);
-        panel.add(errorLabel, gbc);
+        JButton signUpButton = new JButton("Sign Up");
+        signUpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = emailField.getText();
+                String password = new String(passwordField.getPassword());
+                String confirmPassword = new String(confirmPasswordField.getPassword());
 
-        // Sign Up button
-        gbc.gridy = 4;
-        signUpButton = new JButton("Sign Up");
-        signUpButton.setBackground(new Color(70, 130, 180));
-        signUpButton.setForeground(Color.WHITE);
-        signUpButton.addActionListener(e -> validateAndSignUp());
+                if (!isValidEmail(email)) {
+                    JOptionPane.showMessageDialog(SignUpForm.this, "Invalid email format.");
+                    return;
+                }
+
+                if (password.length() < 6) {
+                    JOptionPane.showMessageDialog(SignUpForm.this, "Password must be at least 6 characters long.");
+                    return;
+                }
+
+                if (!password.equals(confirmPassword)) {
+                    JOptionPane.showMessageDialog(SignUpForm.this, "Passwords do not match.");
+                    return;
+                }
+
+                if (UserAuthController.getUserByEmail(email) != null) {
+                    JOptionPane.showMessageDialog(SignUpForm.this, "Email already in use.");
+                    return;
+                }
+
+                // Show loading dialog
+                LoadingDialog loadingDialog = new LoadingDialog(SignUpForm.this, "Sending verification code...");
+                SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        String verificationCode = generateVerificationCode();
+                        verificationCodes.put(email, verificationCode);
+                        codeExpirationTimes.put(email, System.currentTimeMillis() + 5 * 60 * 1000); // 5 minutes expiration
+
+                        EmailUtil.sendEmail(email, "Email Verification Code", "Your verification code is: " + verificationCode);
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        loadingDialog.dispose();
+                        JOptionPane.showMessageDialog(SignUpForm.this, "Verification code sent to your email. Please verify.");
+                        new VerificationForm(parent, email, password).setVisible(true);
+                        dispose();
+                    }
+                };
+                worker.execute();
+                loadingDialog.setVisible(true);
+            }
+        });
         panel.add(signUpButton, gbc);
-
-        // Back to Login button
-        gbc.gridy = 5;
-        JButton backButton = new JButton("Back to Login");
-        backButton.setForeground(Color.GRAY);
-        backButton.setBorderPainted(false);
-        backButton.setContentAreaFilled(false);
-        backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        backButton.addActionListener(e -> dispose());
-        panel.add(backButton, gbc);
 
         add(panel);
     }
 
-    private void validateAndSignUp() {
-        String email = emailField.getText().trim();
-        String password = new String(passwordField.getPassword()).trim();
-        String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
-
-        if (!isValidEmail(email)) {
-            showError("Invalid email format");
-            return;
-        }
-
-        if (!isValidPassword(password)) {
-            showError("Password must be at least 6 characters");
-            return;
-        }
-
-        if (!password.equals(confirmPassword)) {
-            showError("Passwords do not match");
-            return;
-        }
-
-        // TODO: Call your registration service here
-        // UserAuthController.registerUser(email, password);
-        
-        JOptionPane.showMessageDialog(this, "Account created successfully!");
-        dispose();
+    private String generateVerificationCode() {
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000);
+        return String.valueOf(code);
     }
 
     private boolean isValidEmail(String email) {
@@ -113,12 +127,14 @@ public class SignUpForm extends JDialog {
         return Pattern.matches(emailRegex, email);
     }
 
-    private boolean isValidPassword(String password) {
-        return password != null && password.length() >= 6;
-    }
-
-    private void showError(String message) {
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
+    public static boolean isCodeValid(String email, String code) {
+        String storedCode = verificationCodes.get(email);
+        Long expirationTime = codeExpirationTimes.get(email);
+        if (storedCode != null && storedCode.equals(code) && expirationTime != null && System.currentTimeMillis() < expirationTime) {
+            verificationCodes.remove(email);
+            codeExpirationTimes.remove(email);
+            return true;
+        }
+        return false;
     }
 }
