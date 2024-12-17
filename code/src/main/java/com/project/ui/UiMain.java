@@ -3,6 +3,7 @@ package com.project.ui;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.project.controller.SearchController;
 import com.project.model.Comic;
+import com.project.model.Hero;
 import com.project.util.CustomSearchField;
 
 import javax.swing.*;
@@ -224,4 +225,18 @@ public class UiMain extends JFrame {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
         cardLayout.show(containerPanel, previousPanel);
     }
+public void displayHeroDetails(Hero hero, String sourcePanel) {
+    HeroProfilePanel profilePanel = new HeroProfilePanel();
+    profilePanel.updateProfile(
+        hero.getName(),
+        hero.getDescription(),
+        hero.getImageUrl() != null ? new ImageIcon(hero.getImageUrl()) : new ImageIcon("https://via.placeholder.com/150"),
+        new String[] { "Comic 1", "Comic 2" } 
+    );
+    JDialog dialog = new JDialog(this, "Character Details", true);
+    dialog.add(profilePanel);
+    dialog.setSize(500, 700);
+    dialog.setLocationRelativeTo(this);
+    dialog.setVisible(true);
+}
 }
