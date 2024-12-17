@@ -1,19 +1,15 @@
 package com.project.ui;
 
 import com.project.controller.SearchController;
-import com.project.util.ScrollUtil;
 import com.project.model.Comic;
 import com.project.model.Hero;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SearchResultsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -30,10 +26,12 @@ public class SearchResultsPanel extends JPanel {
         searchResultsLabel.setFont(new Font("Arial", Font.BOLD, 20));
         add(searchResultsLabel, BorderLayout.NORTH);
 
-        resultsGridPanel = new JPanel(new GridLayout(0, 3, 5, 5));
-        resultsGridPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        resultsGridPanel = new JPanel(new GridLayout(0, 4, 15, 15)); // Grid layout with 4 columns
+        resultsGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        resultsGridPanel.setBackground(new Color(255, 255, 255)); // White background for comics grid
 
-        JScrollPane scrollPane = new JScrollPane(resultsGridPanel);
+        JScrollPane scrollPane = new JScrollPane(resultsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getHorizontalScrollBar().setUnitIncrement(48); // Increase scroll speed
         add(scrollPane, BorderLayout.CENTER);
 
         searchController = new SearchController();
@@ -54,7 +52,7 @@ public class SearchResultsPanel extends JPanel {
             searchResult = searchController.searchCharactersByName(currentSearchText);
             searchResultsLabel.setText("Characters Found");
         } else {
-            searchResult = new SearchController.SearchResult(new ArrayList<>(), 0);
+            searchResult = new SearchController.SearchResult(List.of(), 0);
         }
 
         List<?> searchResults = searchResult.getResults();
@@ -82,22 +80,64 @@ public class SearchResultsPanel extends JPanel {
 
     private void addComicPanel(Comic comic) {
         JPanel comicPanel = new JPanel(new BorderLayout());
-        comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        comicPanel.setPreferredSize(new Dimension(200, 300));
+        comicPanel.setBackground(Color.WHITE);
 
-        JLabel coverLabel;
+        // Shadow effect
+        comicPanel.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Color.LIGHT_GRAY, 1),
+                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))
+        ));
+
+        // Heart-shaped button
+        JButton likeButton = new JButton();
+        likeButton.setFocusPainted(false);
+        likeButton.setBorderPainted(false);
+        likeButton.setContentAreaFilled(false);
+        likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Load heart images
+        URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
+        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
+        if (whiteHeartURL != null && redHeartURL != null) {
+            ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
+            ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
+            Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            likeButton.setIcon(new ImageIcon(whiteHeartImage));
+
+            likeButton.addActionListener(e -> {
+                if (likeButton.getIcon().equals(new ImageIcon(whiteHeartImage))) {
+                    likeButton.setIcon(new ImageIcon(redHeartImage));
+                } else {
+                    likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                }
+            });
+        } else {
+            likeButton.setText("❤"); // Fallback to text if images are not found
+        }
+
+        JPanel likeButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        likeButtonPanel.setOpaque(false);
+        likeButtonPanel.add(likeButton);
+
+        JLabel coverLabel = new JLabel();
+        coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         try {
             URL imageURL = new URL(comic.getCoverImageUrl());
             ImageIcon icon = new ImageIcon(imageURL);
-            Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-            coverLabel = new JLabel(new ImageIcon(img));
+            Image img = icon.getImage().getScaledInstance(180, 250, Image.SCALE_SMOOTH);
+            coverLabel.setIcon(new ImageIcon(img));
         } catch (Exception e) {
-            coverLabel = new JLabel("Image unavailable");
+            coverLabel.setText("Image unavailable");
+            coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         }
 
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
-        comicPanel.add(coverLabel, BorderLayout.CENTER);
-        comicPanel.add(titleLabel, BorderLayout.SOUTH);
-        
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        titleLabel.setForeground(Color.BLACK); // Set title color to black
+        titleLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
+
         comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -109,7 +149,10 @@ public class SearchResultsPanel extends JPanel {
                 }
             }
         });
-        
+
+        comicPanel.add(coverLabel, BorderLayout.CENTER);
+        comicPanel.add(titleLabel, BorderLayout.SOUTH);
+        comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
         resultsGridPanel.add(comicPanel);
     }
 
