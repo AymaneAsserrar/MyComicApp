@@ -12,6 +12,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
 
@@ -227,6 +230,14 @@ public class UiMain extends JFrame {
     }
 public void displayHeroDetails(Hero hero, String sourcePanel) {
     HeroProfilePanel profilePanel = new HeroProfilePanel();
+    
+    JEditorPane descriptionPane = new JEditorPane();
+    descriptionPane.setContentType("text/html");
+    descriptionPane.setEditable(false); 
+
+    
+    JScrollPane scrollPane = new JScrollPane(descriptionPane);
+    scrollPane.setPreferredSize(new Dimension(450, 300));
     profilePanel.updateProfile(
         hero.getName(),
         hero.getDescription(),
