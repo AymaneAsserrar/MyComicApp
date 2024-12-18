@@ -152,24 +152,63 @@ public class SearchController {
     }
     
     public Hero getCharacterDetails(int characterId) {
-        String jsonResponse = api.fetchCharacterDetails(characterId); 
+        String jsonResponse = api.fetchCharacterDetails(characterId);
+        System.out.println("API Response: " + jsonResponse); 
         if (jsonResponse == null) {
             return null; 
         }
+    
         Gson gson = new Gson();
         JsonObject responseObject = gson.fromJson(jsonResponse, JsonObject.class);
+    
         if (responseObject.has("results") && responseObject.get("results").isJsonObject()) {
             JsonObject resultsObject = responseObject.getAsJsonObject("results");
             Hero hero = new Hero();
-            hero.setId(resultsObject.get("id").getAsInt());
-            hero.setName(resultsObject.get("name").getAsString());
-            hero.setDescription(resultsObject.has("description") ? resultsObject.get("description").getAsString() : null);
-            hero.setImageUrl(resultsObject.has("image") ? resultsObject.getAsJsonObject("image").get("original_url").getAsString() : null);
+    
+            // Récupération de l'ID avec vérification
+            if (resultsObject.has("id") && !resultsObject.get("id").isJsonNull()) {
+                hero.setId(resultsObject.get("id").getAsInt());
+            } else {
+                hero.setId(-1); // Valeur par défaut pour ID non défini
+            }
+    
+            // Récupération du nom avec vérification
+            hero.setName(resultsObject.has("name") && !resultsObject.get("name").isJsonNull() ? 
+                         resultsObject.get("name").getAsString() : "Unknown");
+    
+            // Récupération de la description
+            hero.setDescription(resultsObject.has("description") && !resultsObject.get("description").isJsonNull() ? 
+                                resultsObject.get("description").getAsString() : "No description available");
+    
+            // Récupération de l'URL de l'image
+            if (resultsObject.has("image") && resultsObject.get("image").isJsonObject()) {
+                JsonObject imageObject = resultsObject.getAsJsonObject("image");
+                hero.setImageUrl(imageObject.has("original_url") && !imageObject.get("original_url").isJsonNull() ? 
+                                 imageObject.get("original_url").getAsString() : null);
+            } else {
+                hero.setImageUrl(null);
+            }
+    
+            // Récupération des titres
+            if (resultsObject.has("issue_credits") && resultsObject.get("issue_credits").isJsonArray()) {
+                JsonArray issueArray = resultsObject.getAsJsonArray("issue_credits");
+                List<String> titles = new ArrayList<>();
+                for (JsonElement issueElement : issueArray) {
+                    if (issueElement.isJsonObject()) {
+                        JsonObject issue = issueElement.getAsJsonObject();
+                        if (issue.has("name") && !issue.get("name").isJsonNull()) {
+                            titles.add(issue.get("name").getAsString());
+                        }
+                    }
+                }
+                hero.setTitles(titles.isEmpty() ? new String[]{"No associated titles found"} : titles.toArray(new String[0]));
+            } else {
+                hero.setTitles(new String[]{"No associated titles found"});
+            }
     
             return hero; 
         }
     
         return null; 
     }
-    
 }

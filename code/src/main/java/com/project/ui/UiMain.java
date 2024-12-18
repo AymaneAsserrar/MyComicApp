@@ -256,7 +256,7 @@ public class UiMain extends JFrame {
                 hero.getName(),
                 "Character Details",
                 heroImage,
-                new String[] { "Comic 1", "Comic 2" }) ;
+                hero.getTitles());
     
         
         JDialog dialog = new JDialog(this, hero.getName(), true);
