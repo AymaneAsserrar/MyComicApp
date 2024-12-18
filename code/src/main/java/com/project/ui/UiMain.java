@@ -12,8 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+
 
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
@@ -228,26 +227,64 @@ public class UiMain extends JFrame {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
         cardLayout.show(containerPanel, previousPanel);
     }
-public void displayHeroDetails(Hero hero, String sourcePanel) {
-    HeroProfilePanel profilePanel = new HeroProfilePanel();
+    public void displayHeroDetails(Hero hero, String sourcePanel) {
+        
+        HeroProfilePanel profilePanel = new HeroProfilePanel();
     
-    JEditorPane descriptionPane = new JEditorPane();
-    descriptionPane.setContentType("text/html");
-    descriptionPane.setEditable(false); 
+        
+        JEditorPane descriptionPane = new JEditorPane();
+        descriptionPane.setContentType("text/html");
+        descriptionPane.setEditable(false);
+    
+      
+        String description = hero.getDescription() != null
+                ? hero.getDescription()
+                : "<p style='color:gray;'>No description available.</p>";
+        descriptionPane.setText("<html><body style='font-family:sans-serif;'>" + description + "</body></html>");
+    
+        
+        JScrollPane scrollPane = new JScrollPane(descriptionPane);
+        scrollPane.setPreferredSize(new Dimension(450, 300));
+    
+        
+        ImageIcon heroImage = hero.getImageUrl() != null
+                ? new ImageIcon(hero.getImageUrl()) 
+                : new ImageIcon("https://via.placeholder.com/150"); 
+    
+       
+        profilePanel.updateProfile(
+                hero.getName(),
+                "Character Details",
+                heroImage,
+                new String[] { "Comic 1", "Comic 2" }) ;
+    
+        
+        JDialog dialog = new JDialog(this, hero.getName(), true);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(profilePanel, BorderLayout.NORTH);
+        dialog.add(scrollPane, BorderLayout.CENTER); 
+        dialog.setSize(500, 700);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+        
+        JButton fullscreenButton = new JButton("Fullscreen");
+        fullscreenButton.addActionListener(e -> {
+        JDialog fullscreenDialog = new JDialog();
+        fullscreenDialog.setTitle("Full Image");
+        JLabel fullImageLabel = new JLabel(heroImage);
+        JScrollPane fullScrollPane = new JScrollPane(fullImageLabel);
+        fullscreenDialog.add(fullScrollPane);
+        fullscreenDialog.setSize(800, 600);
+        fullscreenDialog.setLocationRelativeTo(this);
+        fullscreenDialog.setVisible(true);
+        });
 
+// Redimensionnement de l'image principale
+Image scaledImage = heroImage.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+ImageIcon scaledIcon = new ImageIcon(scaledImage);
+JLabel imageLabel = new JLabel(scaledIcon);
+
+        
+    }
     
-    JScrollPane scrollPane = new JScrollPane(descriptionPane);
-    scrollPane.setPreferredSize(new Dimension(450, 300));
-    profilePanel.updateProfile(
-        hero.getName(),
-        hero.getDescription(),
-        hero.getImageUrl() != null ? new ImageIcon(hero.getImageUrl()) : new ImageIcon("https://via.placeholder.com/150"),
-        new String[] { "Comic 1", "Comic 2" } 
-    );
-    JDialog dialog = new JDialog(this, "Character Details", true);
-    dialog.add(profilePanel);
-    dialog.setSize(500, 700);
-    dialog.setLocationRelativeTo(this);
-    dialog.setVisible(true);
-}
 }
