@@ -6,7 +6,7 @@ public class Hero {
     private String realName; // Real name of the character (e.g., "Bruce Wayne")
     private String imageUrl; // URL of the character's image
     private String description; // Description of the character
-
+    private String[] titles;
     // Getters and setters
     public int getId() {
         return id;
@@ -57,5 +57,11 @@ public class Hero {
                 ", imageUrl='" + imageUrl + '\'' +
                 ", description='" + description + '\'' +
                 '}';
+    }
+    public String[] getTitles() {
+        return titles;
+    }
+    public void setTitles(String[] titles) {
+        this.titles = titles;
     }
 }

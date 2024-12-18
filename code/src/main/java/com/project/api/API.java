@@ -213,6 +213,33 @@ public class API {
 			return null;
 		}
 	}
-
+	public String fetchCharacterDetails(int characterId) {
+		String endpoint = "character/4005-" + characterId + "/?api_key=" + API_KEY + "&format=json";
+		String url = BASE_URL + endpoint;
+		
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+	
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
+			}
+			return response.body() != null ? response.body().string() : null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}	
+	public Hero parseHeroDetails(JsonObject resultsObject) {
+		Hero hero = new Hero();
+		hero.setId(resultsObject.get("id").getAsInt());
+		hero.setName(resultsObject.get("name").getAsString());
+		hero.setRealName(resultsObject.has("real_name") ? resultsObject.get("real_name").getAsString() : "Unknown");
+		hero.setImageUrl(resultsObject.getAsJsonObject("image").get("url").getAsString());
+		hero.setDescription(resultsObject.has("description") ? resultsObject.get("description").getAsString() : "No description available");
+		return hero;
+	}
 
 }

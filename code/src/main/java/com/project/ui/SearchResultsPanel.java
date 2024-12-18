@@ -157,9 +157,11 @@ public class SearchResultsPanel extends JPanel {
     }
 
     private void addHeroPanel(Hero hero) {
-        JPanel comicPanel = new JPanel(new BorderLayout());
-        comicPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
+        // Création du panneau principal pour chaque héros
+        JPanel heroPanel = new JPanel(new BorderLayout());
+        heroPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    
+        // Ajout de l'image du personnage
         JLabel coverLabel;
         try {
             URL imageURL = new URL(hero.getImageUrl());
@@ -169,10 +171,29 @@ public class SearchResultsPanel extends JPanel {
         } catch (Exception e) {
             coverLabel = new JLabel("Image unavailable");
         }
-
+    
+        // Ajout du nom du personnage
         JLabel titleLabel = new JLabel(hero.getName(), SwingConstants.CENTER);
-        comicPanel.add(coverLabel, BorderLayout.CENTER);
-        comicPanel.add(titleLabel, BorderLayout.SOUTH);
-        resultsGridPanel.add(comicPanel);
+        heroPanel.add(coverLabel, BorderLayout.CENTER);
+        heroPanel.add(titleLabel, BorderLayout.SOUTH);
+    
+        // Ajout du MouseListener pour récupérer les détails du personnage
+        heroPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        heroPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                Hero detailedHero = searchController.getCharacterDetails(hero.getId());
+                if (detailedHero != null) {
+                    // Appelle UiMain pour afficher les détails dans HeroProfilePanel
+                    UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(SearchResultsPanel.this);
+                    parentFrame.displayHeroDetails(detailedHero, "SearchResults");
+                } else {
+                    JOptionPane.showMessageDialog(SearchResultsPanel.this, "Details not found for character ID: " + hero.getId());
+                }
+            }
+        });
+    
+        // Ajout du panneau dans resultsGridPanel
+        resultsGridPanel.add(heroPanel);
     }
 }
