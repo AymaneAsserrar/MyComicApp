@@ -3,11 +3,19 @@ package com.project.model;
 import java.sql.Timestamp;
 
 public class User {
+    private static int GLOBAL_BIBLIO_COUNTER = 0;
     private int id;
     private String email;
     private String passwordHash;
     private Timestamp createdAt;
     private int idBiblio;
+
+    public User() {
+        synchronized(User.class) {
+            GLOBAL_BIBLIO_COUNTER++;
+            this.idBiblio = GLOBAL_BIBLIO_COUNTER;
+        }
+    }
 
     // Getters and setters
     public int getId() {
@@ -47,6 +55,8 @@ public class User {
     }
 
     public void setIdBiblio(int idBiblio) {
-        this.idBiblio = idBiblio;
+        // Cette méthode ne devrait plus être utilisée directement
+        // L'idBiblio est maintenant géré par le constructeur
+        throw new UnsupportedOperationException("IdBiblio cannot be set manually");
     }
 }
