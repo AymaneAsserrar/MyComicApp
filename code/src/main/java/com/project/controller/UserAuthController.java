@@ -50,13 +50,11 @@ public class UserAuthController {
 	}
 
 	public static void createUser(String email, String passwordHash) {
-		String query = "INSERT INTO user (email, password_hash, id_biblio) VALUES (?, ?, ?)";
+		String query = "INSERT INTO user (email, password_hash) VALUES (?, ?)";
 		try (Connection conn = DatabaseUtil.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(query)) {
-			User newUser = new User();
 			pstmt.setString(1, email);
 			pstmt.setString(2, passwordHash);
-			pstmt.setInt(3, newUser.getIdBiblio());
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
 			System.err.println("Failed to create user: " + e.getMessage());

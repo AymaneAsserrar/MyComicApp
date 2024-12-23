@@ -42,7 +42,7 @@ public class DatabaseUtil {
                 "email TEXT UNIQUE NOT NULL," +
                 "password_hash TEXT NOT NULL," +
                 "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
-                "id_biblio INTEGER UNIQUE)";
+                "id_biblio INTEGER UNIQUE AUTOINCREMENT)";
 
         String createBiblioTable = "CREATE TABLE IF NOT EXISTS biblio (" +
                 "id_biblio INTEGER," +
