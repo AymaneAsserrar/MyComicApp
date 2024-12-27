@@ -60,4 +60,9 @@ public class UserAuthController {
 			System.err.println("Failed to create user: " + e.getMessage());
 		}
 	}
+
+	public static void updateUserPassword(String email, String newPassword) {
+		// TODO Auto-generated method stub
+		
+	}
 }
