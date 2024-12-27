@@ -8,7 +8,7 @@ public class User {
     private String passwordHash;
     private Timestamp createdAt;
     private int idBiblio;
-
+    
     // Getters and setters
     public int getId() {
         return id;
@@ -47,6 +47,8 @@ public class User {
     }
 
     public void setIdBiblio(int idBiblio) {
-        this.idBiblio = idBiblio;
+        // Cette méthode ne devrait plus être utilisée directement
+        // L'idBiblio est maintenant géré par le constructeur
+        throw new UnsupportedOperationException("IdBiblio cannot be set manually");
     }
 }

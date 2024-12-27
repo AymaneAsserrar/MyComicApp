@@ -12,8 +12,9 @@ import java.sql.SQLException;
 public class UserAuthController {
 	// method that gets a user information by email from the database
 	public static User getUserByEmail(String email) {
-		String query = "SELECT * FROM user WHERE email = ?";
-		try (Connection conn = DatabaseUtil.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+		String query = "SELECT id, email, password_hash, created_at FROM user WHERE email = ?";
+		try (Connection conn = DatabaseUtil.getConnection(); 
+			 PreparedStatement pstmt = conn.prepareStatement(query)) {
 			pstmt.setString(1, email);
 			try (ResultSet rs = pstmt.executeQuery()) {
 				if (rs.next()) {
@@ -22,7 +23,6 @@ public class UserAuthController {
 					user.setEmail(rs.getString("email"));
 					user.setPasswordHash(rs.getString("password_hash"));
 					user.setCreatedAt(rs.getTimestamp("created_at"));
-					user.setIdBiblio(rs.getInt("id_biblio"));
 					return user;
 				} else {
 					System.out.println("No account found with email: " + email);

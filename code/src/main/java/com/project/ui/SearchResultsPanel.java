@@ -10,6 +10,11 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.net.URL;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import com.project.util.DatabaseUtil;
+import com.project.model.UserLibraryController;
 
 public class SearchResultsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -96,26 +101,7 @@ public class SearchResultsPanel extends JPanel {
         likeButton.setContentAreaFilled(false);
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Load heart images
-        URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
-        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
-        if (whiteHeartURL != null && redHeartURL != null) {
-            ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
-            ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
-            Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            likeButton.setIcon(new ImageIcon(whiteHeartImage));
-
-            likeButton.addActionListener(e -> {
-                if (likeButton.getIcon().equals(new ImageIcon(whiteHeartImage))) {
-                    likeButton.setIcon(new ImageIcon(redHeartImage));
-                } else {
-                    likeButton.setIcon(new ImageIcon(whiteHeartImage));
-                }
-            });
-        } else {
-            likeButton.setText("❤"); // Fallback to text if images are not found
-        }
+        setupHeartButton(likeButton, comic);
 
         JPanel likeButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         likeButtonPanel.setOpaque(false);
@@ -195,5 +181,51 @@ public class SearchResultsPanel extends JPanel {
     
         // Ajout du panneau dans resultsGridPanel
         resultsGridPanel.add(heroPanel);
+    }
+
+    private void setupHeartButton(JButton likeButton, Comic comic) {
+        URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
+        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
+        
+        if (whiteHeartURL != null && redHeartURL != null) {
+            ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
+            ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
+            Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame.getCurrentUserEmail();
+            
+            if (userEmail == null) {
+                likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                likeButton.addActionListener(e -> {
+                    JOptionPane.showMessageDialog(this, "Please login to add comics to your library");
+                });
+            } else {
+                UserLibraryController controller = new UserLibraryController();
+                boolean isInLibrary = controller.isComicInLibrary(getUserId(userEmail), comic.getId());
+                likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
+                
+                likeButton.addActionListener(e -> {
+                    if (!isInLibrary && controller.addComicToLibrary(getUserId(userEmail), comic)) {
+                        likeButton.setIcon(new ImageIcon(redHeartImage));
+                    }
+                });
+            }
+        }
+    }
+
+    private int getUserId(String email) {
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }

@@ -27,6 +27,8 @@ public class UiMain extends JFrame {
     private JLabel profileLabel;
     private JButton profileButton;
     private JPanel searchProfilePanel;
+    private LibraryPanel libraryPanel;
+
 
     public UiMain() {
         // Set FlatLaf theme
@@ -140,6 +142,8 @@ public class UiMain extends JFrame {
         containerPanel.add(recommendationPanel, "Recommendation");
         containerPanel.add(searchResultsPanel, "SearchResults");
         containerPanel.add(comicDetailsPanel, "ComicDetails");
+        libraryPanel = new LibraryPanel();
+        containerPanel.add(libraryPanel, "Library");
 
         add(containerPanel, BorderLayout.CENTER);
 
@@ -156,6 +160,13 @@ public class UiMain extends JFrame {
             public void mouseEntered(MouseEvent e) {
                 label.setText("<html><u>" + text + "</u></html>");
             }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if ("Library".equals(text)) {
+                    showLibraryPanel();
+                }
+            }
+
 
             @Override
             public void mouseExited(MouseEvent e) {
@@ -163,6 +174,11 @@ public class UiMain extends JFrame {
             }
         });
         return label;
+    }
+
+    private void showLibraryPanel() {
+        libraryPanel.updateLibrary(currentUserEmail);
+        cardLayout.show(containerPanel, "Library");
     }
 
     public void displaySearchResults(String searchText, String searchType) {
@@ -204,6 +220,7 @@ public class UiMain extends JFrame {
         searchProfilePanel.repaint();
 
         recommendationPanel.updateLibraryMessage(true);
+        libraryPanel.updateLibrary(email);
     }
 
     private void logout() {
@@ -217,6 +234,7 @@ public class UiMain extends JFrame {
         searchProfilePanel.repaint();
 
         recommendationPanel.updateLibraryMessage(false);
+        libraryPanel.updateLibrary(null);
     }
 
     public String getCurrentUserEmail() {
