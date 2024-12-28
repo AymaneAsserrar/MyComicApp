@@ -97,19 +97,59 @@ public class LibraryPanel extends JPanel {
         }
         return comics;
     }
+    private int getUserId(String email) {
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 
     private void addComicPanel(Comic comic) {
         JPanel comicPanel = new JPanel(new BorderLayout());
         comicPanel.setPreferredSize(new Dimension(200, 300));
         comicPanel.setBackground(Color.WHITE);
         
-        // Add shadow effect
+        // Shadow effect
         comicPanel.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(Color.LIGHT_GRAY, 1),
             BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))
         ));
-
-        // Cover image
+    
+        // Heart button
+        JButton removeButton = new JButton();
+        removeButton.setFocusPainted(false);
+        removeButton.setBorderPainted(false);
+        removeButton.setContentAreaFilled(false);
+        removeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    
+        // Load heart icons
+        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
+        if (redHeartURL != null) {
+            ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
+            Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            removeButton.setIcon(new ImageIcon(redHeartImage));
+        }
+    
+        // Add click handler for heart button
+        removeButton.addActionListener(e -> {
+            int userId = getUserId(currentUserEmail);
+            if (libraryController.removeComicFromLibrary(userId, comic.getId())) {
+                loadUserLibrary(currentUserEmail); // Refresh the library view
+            }
+        });
+    
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(removeButton);
+    
+        // Cover image with click handler
         JLabel coverLabel = new JLabel();
         coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         try {
@@ -120,12 +160,23 @@ public class LibraryPanel extends JPanel {
         } catch (Exception e) {
             coverLabel.setText("Image unavailable");
         }
-
+    
+        // Make comic panel clickable for details
+        comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(LibraryPanel.this);
+                parentFrame.displayComicDetails(comic, "Library");
+            }
+        });
+    
         // Title label
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
         titleLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
-
+    
+        comicPanel.add(buttonPanel, BorderLayout.NORTH);
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicsGridPanel.add(comicPanel);
