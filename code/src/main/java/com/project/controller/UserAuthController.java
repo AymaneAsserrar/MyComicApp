@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserAuthController {
@@ -70,12 +71,10 @@ public class UserAuthController {
         }
     }
 
-    // Generate a secure token
     private static String generateResetToken() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] tokenBytes = new byte[32];
-        secureRandom.nextBytes(tokenBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000); 
+        return String.valueOf(code);
     }
 
     // Method to initiate password reset using hashmaps

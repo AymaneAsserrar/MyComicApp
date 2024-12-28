@@ -6,7 +6,6 @@ import com.project.util.EmailUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Random;
 import java.util.regex.Pattern;
 
 public class ResetPasswordPanel extends JDialog {
@@ -83,20 +82,32 @@ public class ResetPasswordPanel extends JDialog {
         User user = UserAuthController.getUserByEmail(email);
 
         if (user != null) {
-            // Send reset token and store in memory via UserAuthController
-            if (UserAuthController.initiatePasswordReset(email)) {
-                showFeedback("Reset email sent successfully!", false);
+            LoadingDialog loadingDialog = new LoadingDialog(this, "Sending verification code...");
+            
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    // Send reset token and store in memory via UserAuthController
+                    UserAuthController.initiatePasswordReset(email);
+                    return null;
+                }
 
-                // Hide email input and button
-                emailLabel.setVisible(false);
-                emailField.setVisible(false);
-                sendEmailButton.setVisible(false);
+                @Override
+                protected void done() {
+                    loadingDialog.dispose();
+                    showFeedback("Reset email sent successfully!", false);
 
-                // Add token input field and verification button
-                addTokenInputField(panel, gbc);
-            } else {
-                showFeedback("Error initiating password reset. Try again.", true);
-            }
+                    // Hide email input and button
+                    emailLabel.setVisible(false);
+                    emailField.setVisible(false);
+                    sendEmailButton.setVisible(false);
+
+                    // Add token input field and verification button
+                    addTokenInputField(panel, gbc);
+                }
+            };
+            worker.execute();
+            loadingDialog.setVisible(true);
         } else {
             showFeedback("No account found with email: " + email, true);
         }
@@ -208,4 +219,5 @@ public class ResetPasswordPanel extends JDialog {
         feedbackLabel.setForeground(isError ? Color.RED : Color.GREEN);
         feedbackLabel.setVisible(true);
     }
+
 }
