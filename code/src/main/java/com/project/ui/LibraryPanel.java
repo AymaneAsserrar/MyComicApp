@@ -141,7 +141,12 @@ public class LibraryPanel extends JPanel {
         removeButton.addActionListener(e -> {
             int userId = getUserId(currentUserEmail);
             if (libraryController.removeComicFromLibrary(userId, comic.getId())) {
-                loadUserLibrary(currentUserEmail); // Refresh the library view
+                // Refresh library view
+                loadUserLibrary(currentUserEmail);
+                
+                // Get main window and refresh other panels
+                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+                parentFrame.refreshAllPanels();
             }
         });
     

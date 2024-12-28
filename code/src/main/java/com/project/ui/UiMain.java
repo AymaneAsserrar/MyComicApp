@@ -331,5 +331,21 @@ JLabel imageLabel = new JLabel(scaledIcon);
 
         
     }
+    public void refreshAllPanels() {
+        // Refresh recommendation panel
+        if (recommendationPanel != null) {
+            recommendationPanel.refreshHeartButtons();
+        }
+        
+        // Refresh search results panel
+        if (searchResultsPanel != null) {
+            searchResultsPanel.refreshHeartButtons();
+        }
+        
+        // Refresh library panel
+        if (libraryPanel != null) {
+            libraryPanel.updateLibrary(currentUserEmail);
+        }
+    }
     
 }

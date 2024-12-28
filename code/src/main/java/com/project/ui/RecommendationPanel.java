@@ -171,7 +171,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicsGridPanel.add(comicPanel, comicsGridPanel.getComponentCount() - 1);
     }
 
-    private void refreshHeartButtons() {
+    public void refreshHeartButtons() {
         for (Map.Entry<JButton, Comic> entry : heartButtons.entrySet()) {
             setupHeartButton(entry.getKey(), entry.getValue());
         }
