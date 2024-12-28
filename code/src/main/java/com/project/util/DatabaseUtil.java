@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.io.File;
 
 public class DatabaseUtil {
@@ -69,8 +71,58 @@ public class DatabaseUtil {
             stmt.execute(createUsersTable);
             stmt.execute(createComicsTable);
             stmt.execute(createBiblioTable);
+            
+            // Add admin account after creating tables
+            createTestAccounts();
         } catch (SQLException e) {
             System.err.println("Error creating tables: " + e.getMessage());
+        }
+    }
+
+    private static void createTestAccounts() {
+        // Admin account parameters
+        String adminEmail = "admin@admin.com";
+        String adminPassword = "admin";
+    
+        // Test account parameters  
+        String testEmail = "test@test.com";
+        String testPassword = "test123";
+    
+        String checkQuery = "SELECT COUNT(*) FROM user WHERE email = ?";
+        String insertQuery = "INSERT INTO user (email, password_hash) VALUES (?, ?)";
+    
+        try (Connection conn = getConnection()) {
+            // Create admin account if it doesn't exist
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+                checkStmt.setString(1, adminEmail);
+                ResultSet rs = checkStmt.executeQuery();
+                
+                if (rs.next() && rs.getInt(1) == 0) {
+                    try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                        insertStmt.setString(1, adminEmail);
+                        insertStmt.setString(2, Hashing.hashPassword(adminPassword));
+                        insertStmt.executeUpdate();
+                        System.out.println("Admin account created successfully");
+                    }
+                }
+            }
+    
+            // Create test account if it doesn't exist
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+                checkStmt.setString(1, testEmail);
+                ResultSet rs = checkStmt.executeQuery();
+                
+                if (rs.next() && rs.getInt(1) == 0) {
+                    try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                        insertStmt.setString(1, testEmail);
+                        insertStmt.setString(2, Hashing.hashPassword(testPassword));
+                        insertStmt.executeUpdate();
+                        System.out.println("Test account created successfully");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error creating test accounts: " + e.getMessage());
         }
     }
 }

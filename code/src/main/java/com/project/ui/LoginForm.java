@@ -163,6 +163,7 @@ public class LoginForm extends JDialog {
 
         if ("SUCCESS".equals(validationMessage)) {
             JOptionPane.showMessageDialog(this, "Login successful!");
+            ((UiMain) parent).setCurrentUserEmail(email);
             ((UiMain) parent).updateProfile(email);
             dispose();
         } else {

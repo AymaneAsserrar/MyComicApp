@@ -8,7 +8,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
@@ -17,15 +19,21 @@ import java.sql.ResultSet;
 import com.project.util.DatabaseUtil;
 import com.project.model.UserLibraryController;
 
-public class RecommendationPanel extends JPanel {
+public class RecommendationPanel extends JPanel implements UiMain.UserLoginListener {
     private static final long serialVersionUID = 2561771664627867791L;
     private JPanel comicsGridPanel;
     private RecommendationController recommendationController;
     private int currentOffset = 0;
     private static final int PAGE_SIZE = 10;
     private JLabel libraryMessageLabel;
+    private Map<JButton, Comic> heartButtons;
+    private UiMain parentFrame;
 
-    public RecommendationPanel() {
+    public RecommendationPanel(UiMain parent) {
+        this.parentFrame = parent;
+        this.heartButtons = new HashMap<>();
+        parentFrame.addLoginListener(this);
+
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
@@ -163,58 +171,84 @@ public class RecommendationPanel extends JPanel {
         comicsGridPanel.add(comicPanel, comicsGridPanel.getComponentCount() - 1);
     }
 
-    private void setupHeartButton(JButton likeButton, Comic comic) {
-        URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
-        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
-        
-        // Si les images ne sont pas trouvées, utiliser un texte par défaut
-        if (whiteHeartURL == null || redHeartURL == null) {
-            likeButton.setText("♡"); // Utiliser un caractère coeur comme fallback
-            likeButton.setFont(new Font("Arial", Font.PLAIN, 20));
-        } else {
-            try {
-                ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
-                ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
-                Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-                Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-                
-                // Le reste du code...
-                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
-                String userEmail = parentFrame != null ? parentFrame.getCurrentUserEmail() : null;
-                
-                if (userEmail == null) {
-                    likeButton.setIcon(new ImageIcon(whiteHeartImage));
-                    likeButton.addActionListener(e -> {
-                        JOptionPane.showMessageDialog(this, "Please login to add comics to your library");
-                    });
-                } else {
-                    UserLibraryController controller = new UserLibraryController();
-                    boolean isInLibrary = controller.isComicInLibrary(getUserId(userEmail), comic.getId());
-                    likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
-                    
-                    likeButton.addActionListener(e -> {
-                        if (!isInLibrary && controller.addComicToLibrary(getUserId(userEmail), comic)) {
-                            likeButton.setIcon(new ImageIcon(redHeartImage));
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                likeButton.setText("♡");
-                likeButton.setFont(new Font("Arial", Font.PLAIN, 20));
-            }
+    private void refreshHeartButtons() {
+        for (Map.Entry<JButton, Comic> entry : heartButtons.entrySet()) {
+            setupHeartButton(entry.getKey(), entry.getValue());
         }
     }
 
+    private void setupHeartButton(JButton likeButton, Comic comic) {
+        heartButtons.put(likeButton, comic);
+        URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
+        URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
+    
+        if (whiteHeartURL != null && redHeartURL != null) {
+            ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
+            ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
+            Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+    
+            String userEmail = parentFrame.getCurrentUserEmail();
+    
+            // Remove existing action listeners safely
+            ActionListener[] listeners = likeButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                likeButton.removeActionListener(listener);
+            }
+    
+            if (userEmail == null || userEmail.isEmpty()) {
+                likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                likeButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your library"));
+                return;
+            }
+    
+            int userId = getUserId(userEmail);
+            UserLibraryController controller = new UserLibraryController();
+            boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
+            
+            // Set initial icon based on library status
+            likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
+            
+            // Add click handler
+            likeButton.addActionListener(e -> {
+                boolean currentState = controller.isComicInLibrary(userId, comic.getId());
+                
+                if (currentState) {
+                    if (controller.removeComicFromLibrary(userId, comic.getId())) {
+                        likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                    }
+                } else {
+                    if (controller.addComicToLibrary(userId, comic)) {
+                        likeButton.setIcon(new ImageIcon(redHeartImage));
+                    }
+                }
+            });
+        }
+    }
+    @Override
+    public void onUserLogin(String email) {
+        refreshHeartButtons();
+    }
+    
     private int getUserId(String email) {
+        if (email == null || email.isEmpty()) {
+            System.out.println("Email is null or empty"); // Debug log
+            return -1;
+        }
+        
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return rs.getInt("id");
+                int id = rs.getInt("id");
+                System.out.println("Found user ID: " + id); // Debug log
+                return id;
             }
+            System.out.println("No user found for email: " + email); // Debug log
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("Database error: " + e.getMessage()); // Debug log
         }
         return -1;
     }

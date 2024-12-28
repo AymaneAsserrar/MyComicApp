@@ -10,12 +10,15 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 
 
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
     private String currentUserEmail;
+    private List<UserLoginListener> loginListeners;
 
     private RecommendationPanel recommendationPanel;
     private SearchResultsPanel searchResultsPanel;
@@ -37,6 +40,8 @@ public class UiMain extends JFrame {
         setTitle("My Comic App");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 850); // Adjust window height
+
+        loginListeners = new ArrayList<>();
 
         cardLayout = new CardLayout();
         setLayout(new BorderLayout());
@@ -133,7 +138,7 @@ public class UiMain extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         // Initialize the panels
-        recommendationPanel = new RecommendationPanel();
+        recommendationPanel = new RecommendationPanel(this);
         searchResultsPanel = new SearchResultsPanel();
         comicDetailsPanel = new ComicDetailsPanel();
 
@@ -239,6 +244,22 @@ public class UiMain extends JFrame {
 
     public String getCurrentUserEmail() {
         return currentUserEmail;
+    }
+    public void setCurrentUserEmail(String email) {
+        this.currentUserEmail = email;
+        notifyLoginListeners(email);
+    }
+    public interface UserLoginListener {
+        void onUserLogin(String email);
+    }
+    public void addLoginListener(UserLoginListener listener) {
+        loginListeners.add(listener);
+    }
+
+    private void notifyLoginListeners(String email) {
+        for (UserLoginListener listener : loginListeners) {
+            listener.onUserLogin(email);
+        }
     }
 
     public void displayComicDetails(Comic comic, String sourcePanel) {
