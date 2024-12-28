@@ -118,7 +118,6 @@ public class UserLibraryController {
         if (!isComicInLibrary(userId, comicId)) {
             return false;
         }
-
         String query = "UPDATE biblio "
                 + "SET possede = ? "
                 + "WHERE id_biblio = ? AND id_comic = ?;";
