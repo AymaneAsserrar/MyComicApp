@@ -115,6 +115,27 @@ public class UserLibraryController {
 
     // Ownership status handling
     public boolean updateComicOwnership(int userId, int comicId, int possede) {
-        return true;
+        if (!isComicInLibrary(userId, comicId)) {
+            return false;
+        }
+
+        String query = "UPDATE biblio "
+                + "SET possede = ? "
+                + "WHERE id_biblio = ? AND id_comic = ?;";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, possede);
+            pstmt.setInt(2, userId);
+            pstmt.setInt(3, comicId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating possede: " + e.getMessage());
+            return false;
+        }
     }
 }
