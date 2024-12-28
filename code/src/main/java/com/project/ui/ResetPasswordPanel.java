@@ -7,7 +7,6 @@ import com.project.util.EmailUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class ResetPasswordPanel extends JDialog {
@@ -19,8 +18,6 @@ public class ResetPasswordPanel extends JDialog {
     private JButton sendEmailButton;
     private JButton verifyTokenButton;
     private JButton resetPasswordButton;
-    private static final ConcurrentHashMap<String, String> verificationCodes = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, Long> codeExpirationTimes = new ConcurrentHashMap<>();
     private String email;
 
     public ResetPasswordPanel(JFrame parentFrame) {
@@ -86,20 +83,20 @@ public class ResetPasswordPanel extends JDialog {
         User user = UserAuthController.getUserByEmail(email);
 
         if (user != null) {
-            String verificationCode = generateVerificationCode();
-            verificationCodes.put(email, verificationCode);
-            codeExpirationTimes.put(email, System.currentTimeMillis() + 5 * 60 * 1000); // 5 minutes expiration
+            // Send reset token and store in memory via UserAuthController
+            if (UserAuthController.initiatePasswordReset(email)) {
+                showFeedback("Reset email sent successfully!", false);
 
-            EmailUtil.sendEmail(user.getEmail(), "Password Reset", "Your verification code is: " + verificationCode);
-            showFeedback("Reset email sent successfully!", false);
+                // Hide email input and button
+                emailLabel.setVisible(false);
+                emailField.setVisible(false);
+                sendEmailButton.setVisible(false);
 
-            // Hide email input and button
-            emailLabel.setVisible(false);
-            emailField.setVisible(false);
-            sendEmailButton.setVisible(false);
-
-            // Add token input field and verification button
-            addTokenInputField(panel, gbc);
+                // Add token input field and verification button
+                addTokenInputField(panel, gbc);
+            } else {
+                showFeedback("Error initiating password reset. Try again.", true);
+            }
         } else {
             showFeedback("No account found with email: " + email, true);
         }
@@ -130,7 +127,8 @@ public class ResetPasswordPanel extends JDialog {
     private void handleTokenVerification(JPanel panel, GridBagConstraints gbc, JLabel tokenLabel) {
         String token = tokenField.getText().trim();
 
-        if (!isCodeValid(email, token)) {
+        // Use the controller's method to check token validity
+        if (!UserAuthController.isResetTokenValid(email, token)) {
             showFeedback("Invalid or expired token.", true);
             return;
         }
@@ -209,22 +207,5 @@ public class ResetPasswordPanel extends JDialog {
         feedbackLabel.setText(message);
         feedbackLabel.setForeground(isError ? Color.RED : Color.GREEN);
         feedbackLabel.setVisible(true);
-    }
-
-    private String generateVerificationCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
-        return String.valueOf(code);
-    }
-
-    public static boolean isCodeValid(String email, String code) {
-        String storedCode = verificationCodes.get(email);
-        Long expirationTime = codeExpirationTimes.get(email);
-        if (storedCode != null && storedCode.equals(code) && expirationTime != null && System.currentTimeMillis() < expirationTime) {
-            verificationCodes.remove(email);
-            codeExpirationTimes.remove(email);
-            return true;
-        }
-        return false;
     }
 }
