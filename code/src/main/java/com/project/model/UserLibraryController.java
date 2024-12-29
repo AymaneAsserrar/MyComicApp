@@ -1,6 +1,7 @@
 package com.project.model;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -120,9 +121,6 @@ public class UserLibraryController {
     // Ownership handling
 
     public boolean updateComicOwnership(int userId, int comicId, int possede) {
-        if (!isComicInLibrary(userId, comicId)) {
-            return false;
-        }
         String query = "UPDATE biblio "
                 + "SET possede = ? "
                 + "WHERE id_biblio = ? AND id_comic = ?;";
@@ -144,7 +142,7 @@ public class UserLibraryController {
     }
 
     public boolean resetComicOwnership(int userId, int comicId) {
-        if (!isComicInLibrary(userId, comicId)) {
+        if (!isComicInWishlist(userId, comicId)) {
             return false;
         }
         String query = "UPDATE biblio "
@@ -154,8 +152,8 @@ public class UserLibraryController {
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setInt(2, userId);
-            pstmt.setInt(3, comicId);
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, comicId);
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -164,5 +162,27 @@ public class UserLibraryController {
             System.err.println("Error updating possede: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Checks if a comic is in user's wishlist
+     */
+    public boolean isComicInWishlist(int userId, int comicId) {
+        String query = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ? AND possede = 0";
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, comicId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // Check if count is greater than 0
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

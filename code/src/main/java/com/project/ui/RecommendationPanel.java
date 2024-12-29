@@ -233,6 +233,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
+                        refreshStarButtons();
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
                     }
                 } else {
@@ -278,21 +279,21 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
-            boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
+            boolean isComicInWishlist = controller.isComicInWishlist(userId, comic.getId());
 
-            // Set initial icon based on library status
-            starButton.setIcon(isInLibrary ? new ImageIcon(yStarImage) : new ImageIcon(wStarImage));
+            // Set initial icon based on wishlist status
+            starButton.setIcon(isComicInWishlist ? new ImageIcon(yStarImage) : new ImageIcon(wStarImage));
 
             // Add click handler
             starButton.addActionListener(e -> {
-                boolean currentState = controller.isComicInLibrary(userId, comic.getId());
+                boolean currentState = controller.isComicInWishlist(userId, comic.getId());
 
                 if (currentState) {
-                    if (controller.removeComicFromLibrary(userId, comic.getId())) {
+                    if (controller.resetComicOwnership(userId, comic.getId())) {
                         starButton.setIcon(new ImageIcon(wStarImage));
                     }
                 } else {
-                    if (controller.addComicToLibrary(userId, comic)) {
+                    if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
                         starButton.setIcon(new ImageIcon(yStarImage));
                     }
                 }
@@ -330,6 +331,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     public void updateLibraryMessage(boolean isSignedIn) {
+        if (isSignedIn) {
+            libraryMessageLabel.setText("This section will be implemented soon");
+        } else {
+            libraryMessageLabel.setText("You are not signed in yet");
+        }
+    }
+
+    public void updateWishlistMessage(boolean isSignedIn) {
         if (isSignedIn) {
             libraryMessageLabel.setText("This section will be implemented soon");
         } else {

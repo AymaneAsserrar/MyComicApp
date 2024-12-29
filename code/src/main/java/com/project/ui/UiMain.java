@@ -29,6 +29,7 @@ public class UiMain extends JFrame {
     private JButton profileButton;
     private JPanel searchProfilePanel;
     private LibraryPanel libraryPanel;
+    private WishlistPanel wishlistPanel;
 
     public UiMain() {
         // Set FlatLaf theme
@@ -145,7 +146,9 @@ public class UiMain extends JFrame {
         containerPanel.add(searchResultsPanel, "SearchResults");
         containerPanel.add(comicDetailsPanel, "ComicDetails");
         libraryPanel = new LibraryPanel();
+        wishlistPanel = new WishlistPanel();
         containerPanel.add(libraryPanel, "Library");
+        containerPanel.add(wishlistPanel, "Wishlist");
 
         add(containerPanel, BorderLayout.CENTER);
 
@@ -168,6 +171,9 @@ public class UiMain extends JFrame {
                 if ("Library".equals(text)) {
                     showLibraryPanel();
                 }
+                if ("Wishlist".equals(text)) {
+                    showWishlistPanel();
+                }
             }
 
             @Override
@@ -181,6 +187,11 @@ public class UiMain extends JFrame {
     private void showLibraryPanel() {
         libraryPanel.updateLibrary(currentUserEmail);
         cardLayout.show(containerPanel, "Library");
+    }
+
+    private void showWishlistPanel() {
+        wishlistPanel.updateWishlist(currentUserEmail);
+        cardLayout.show(containerPanel, "Wishlist");
     }
 
     public void displaySearchResults(String searchText, String searchType) {
@@ -223,6 +234,9 @@ public class UiMain extends JFrame {
 
         recommendationPanel.updateLibraryMessage(true);
         libraryPanel.updateLibrary(email);
+
+        recommendationPanel.updateWishlistMessage(true);
+        wishlistPanel.updateWishlist(email);
     }
 
     private void logout() {
@@ -237,6 +251,9 @@ public class UiMain extends JFrame {
 
         recommendationPanel.updateLibraryMessage(false);
         libraryPanel.updateLibrary(null);
+
+        recommendationPanel.updateWishlistMessage(false);
+        wishlistPanel.updateWishlist(null);
     }
 
     public String getCurrentUserEmail() {
@@ -320,6 +337,11 @@ public class UiMain extends JFrame {
         // Refresh library panel
         if (libraryPanel != null) {
             libraryPanel.updateLibrary(currentUserEmail);
+        }
+
+        // Refresh wishlist panel
+        if (wishlistPanel != null) {
+            wishlistPanel.updateWishlist(currentUserEmail);
         }
     }
 
