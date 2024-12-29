@@ -25,6 +25,7 @@ public class ComicDetailsPanel extends JPanel {
     private JTextArea issueInfoArea;
     private JTextArea datesArea;
     private JScrollPane scrollPane;
+    private JTextArea genresArea;
 
     public ComicDetailsPanel() {
         setLayout(new BorderLayout());
@@ -90,6 +91,7 @@ public class ComicDetailsPanel extends JPanel {
 
         // Configure text areas
         deckArea = createTextArea(true);
+        genresArea = createTextArea(false);
         authorsArea = createTextArea(false);
         descriptionArea = createTextArea(true);
         charactersPanel = new JPanel();
@@ -102,11 +104,11 @@ public class ComicDetailsPanel extends JPanel {
         ratingLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
         // Add sections with headers
-        addSection(detailsPanel, "Quick Summary", deckArea);
+        addSection(detailsPanel, "Description", descriptionArea);
+        addSection(detailsPanel, "Genres", genresArea);
         addSection(detailsPanel, "Publisher", authorsArea);
         addSection(detailsPanel, "Issue Information", issueInfoArea);
         addSection(detailsPanel, "Published", datesArea);
-        addSection(detailsPanel, "Description", descriptionArea);
         addSection(detailsPanel, "Characters", charactersPanel);
         addSection(detailsPanel, "Teams", teamsArea);
         addSection(detailsPanel, "Rating", ratingLabel);
@@ -164,6 +166,7 @@ public class ComicDetailsPanel extends JPanel {
 
         // Display other comic details...
         deckArea.setText(comic.getDeck());
+        genresArea.setText(comic.getGenresAsString());
         authorsArea.setText(comic.getPublisherName());
 
         String issueInfo = String.format("Issues: %d\nFirst Issue: %s\nLast Issue: %s\nStart Year: %s",

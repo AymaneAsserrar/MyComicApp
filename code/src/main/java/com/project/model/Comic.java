@@ -19,16 +19,19 @@ public class Comic {
     private List<String> teams;
     private String deck;
     private String rating;
+    private List<String> genres;
 
     public Comic() {
         this.heroes = new ArrayList<>();
         this.teams = new ArrayList<>();
+        this.genres = new ArrayList<>();
     }
+
     public String getCharactersAsString() {
         if (heroes == null || heroes.isEmpty()) {
             return "No characters available";
         }
-        
+
         StringBuilder sb = new StringBuilder();
         for (Hero hero : heroes) {
             sb.append("• ").append(hero.getName());
@@ -39,13 +42,14 @@ public class Comic {
         }
         return sb.toString();
     }
-    
+
     public String getTeamsAsString() {
         if (teams == null || teams.isEmpty()) {
             return "No teams available";
         }
         return String.join(", ", teams);
     }
+
     // Getters and setters
     public int getId() {
         return id;
@@ -82,6 +86,25 @@ public class Comic {
     public String getPublisherName() {
         return publisherName;
     }
+
+    // Add getters and setters
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres != null ? genres : new ArrayList<>();
+    }
+
+    // Add helper method to get genres as string for storage
+    public String getGenresAsString() {
+        if (genres == null || genres.isEmpty()) {
+            return "";
+        }
+        return String.join(",", genres);
+    }
+
+    
 
     public void setPublisherName(String publisherName) {
         this.publisherName = publisherName != null ? publisherName : "Unknown Publisher";
@@ -174,13 +197,13 @@ public class Comic {
 
         // Remove HTML tags and clean entities
         String cleaned = rawDescription.replaceAll("<[^>]*>", "")
-                                     .replace("&amp;", "&")
-                                     .replace("&lt;", "<")
-                                     .replace("&gt;", ">")
-                                     .replace("&quot;", "\"")
-                                     .replace("&apos;", "'")
-                                     .replaceAll("\\s+", " ")
-                                     .trim();
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&apos;", "'")
+                .replaceAll("\\s+", " ")
+                .trim();
 
         return cleaned;
     }
@@ -205,4 +228,5 @@ public class Comic {
                 ", rating='" + rating + '\'' +
                 '}';
     }
+
 }

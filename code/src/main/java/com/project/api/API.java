@@ -57,7 +57,7 @@ public class API {
 	public String getComicDetails(int comicId) {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 		"date_added,date_last_updated,first_issue,last_issue," +
-		"publisher,start_year,character_credits,rating";
+		"publisher,start_year,character_credits,rating,concepts";  // Add concepts to fieldList
 
 		String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY
 				+ "&format=json&field_list=" + fieldList;
@@ -160,6 +160,20 @@ public class API {
 	
 		// Set rating
 		comic.setRating(getJsonString(volumeJson, "rating", "N/A"));
+
+		// Add genres parsing
+        if (volumeJson.has("concepts") && !volumeJson.get("concepts").isJsonNull()) {
+            JsonArray conceptsArray = volumeJson.getAsJsonArray("concepts");
+            List<String> genresList = new ArrayList<>();
+            for (JsonElement conceptElement : conceptsArray) {
+                JsonObject conceptJson = conceptElement.getAsJsonObject();
+                String genreName = getJsonString(conceptJson, "name", "");
+                if (!genreName.isEmpty()) {
+                    genresList.add(genreName);
+                }
+            }
+            comic.setGenres(genresList);
+        }
 	
 		return comic;
 	}
@@ -171,7 +185,8 @@ public class API {
         return defaultValue;
     }
     public String searchComicsByTitle(String title) {
-        String fieldList = "id,name,description,deck,image,person_credits,character_credits,rating";
+        String fieldList = "id,name,description,deck,image,person_credits," +
+                "character_credits,rating,concepts";  // Add concepts to fieldList
         String endpoint = "search/?api_key=" + API_KEY 
                 + "&format=json&resources=volume&query=" + title
                 + "&field_list=" + fieldList;

@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import com.project.util.DatabaseUtil;
 import com.project.model.Comic;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class UserLibraryController {
     
@@ -44,7 +47,7 @@ public class UserLibraryController {
      */
     private void ensureComicExists(Comic comic) {
         String checkQuery = "SELECT COUNT(*) FROM comic WHERE id_comic = ?";
-        String insertQuery = "INSERT INTO comic (id_comic, name, description, image) VALUES (?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO comic (id_comic, name, description, image, genres) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = DatabaseUtil.getConnection()) {
             // Check if comic exists
@@ -62,11 +65,19 @@ public class UserLibraryController {
                 insertStmt.setString(2, comic.getName());
                 insertStmt.setString(3, comic.getDescription());
                 insertStmt.setString(4, comic.getCoverImageUrl());
+                insertStmt.setString(5, comic.getGenresAsString());  // Store genres as comma-separated string
                 insertStmt.executeUpdate();
             }
         } catch (SQLException e) {
             System.err.println("Error ensuring comic exists in database: " + e.getMessage());
         }
+    }
+
+    private List<String> getGenresFromString(String genresStr) {
+        if (genresStr == null || genresStr.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(genresStr.split(","));
     }
     
     /**
