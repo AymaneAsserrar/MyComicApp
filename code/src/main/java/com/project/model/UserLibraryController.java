@@ -13,24 +13,28 @@ public class UserLibraryController {
      * Adds a comic to the user's library
      */
     public boolean addComicToLibrary(int userId, Comic comic) {
-        // First check if comic exists in comic table, if not add it
         ensureComicExists(comic);
-
-        // Then add entry to biblio table
-        String query = "INSERT OR REPLACE INTO biblio (id_biblio, id_comic, status, possede, added) " +
-                "VALUES (?, ?, 1, 0, 1)";
-
         try (Connection conn = DatabaseUtil.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?");
+                PreparedStatement insertStmt = conn.prepareStatement(
+                        "INSERT INTO biblio (id_biblio, id_comic, added) VALUES (?, ?, 1)")) {
 
-            pstmt.setInt(1, userId);
-            pstmt.setInt(2, comic.getId());
+            // Vérifier si existe déjà
+            checkStmt.setInt(1, userId);
+            checkStmt.setInt(2, comic.getId());
+            ResultSet rs = checkStmt.executeQuery();
+            rs.next();
+            if (rs.getInt(1) > 0) {
+                return false; // Déjà dans la bibliothèque
+            }
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-
+            // Ajouter si n'existe pas
+            insertStmt.setInt(1, userId);
+            insertStmt.setInt(2, comic.getId());
+            return insertStmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error adding comic to library: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
