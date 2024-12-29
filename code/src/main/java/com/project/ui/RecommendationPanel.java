@@ -72,7 +72,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicsGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         comicsGridPanel.setBackground(new Color(255, 255, 255)); // White background for comics grid
 
-        JScrollPane scrollPane = new JScrollPane(comicsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JScrollPane scrollPane = new JScrollPane(comicsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(48); // Increase scroll speed
         scrollPane.setPreferredSize(new Dimension(1000, 400)); // Reduced height
         popularPanel.add(scrollPane, BorderLayout.CENTER);
@@ -124,8 +125,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         // Shadow effect
         comicPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(Color.LIGHT_GRAY, 1),
-                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))
-        ));
+                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
         // Heart-shaped button
         JButton likeButton = new JButton();
@@ -208,7 +208,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private void updateRecommendations() {
         recommendedGridPanel.removeAll();
         String userEmail = parentFrame.getCurrentUserEmail();
-        
+
         if (userEmail == null || userEmail.isEmpty()) {
             libraryMessageLabel.setText("You are not signed in yet");
             recommendedGridPanel.removeAll();
@@ -218,7 +218,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         }
 
         int userId = getUserId(userEmail);
-        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0, RECOMMENDATION_PAGE_SIZE);
+        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0,
+                RECOMMENDATION_PAGE_SIZE);
 
         if (recommendations.isEmpty()) {
             libraryMessageLabel.setText("Please add a comic to your library to get recommendations");
@@ -240,9 +241,22 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendedGridPanel.repaint();
     }
 
+    private void addLoadMoreButton(JPanel panel, int userId) {
+        JButton loadMoreButton = new JButton("→");
+        loadMoreButton.setPreferredSize(new Dimension(50, 300));
+        loadMoreButton.setFont(new Font("Arial", Font.BOLD, 35));
+        loadMoreButton.setForeground(Color.BLACK);
+        loadMoreButton.setFocusPainted(false);
+        loadMoreButton.setBorderPainted(false);
+        loadMoreButton.setContentAreaFilled(false);
+        loadMoreButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        loadMoreButton.addActionListener(e -> loadMoreRecommendations(userId));
+        panel.add(loadMoreButton);
+    }
+
     private void loadMoreRecommendations(int userId) {
-        List<Comic> newRecommendations = recommendationController.getRecommendedComics(userId, 
-            recommendedOffset, 12);
+        List<Comic> newRecommendations = recommendationController.getRecommendedComics(userId,
+                recommendedOffset, 12);
         if (!newRecommendations.isEmpty()) {
             recommendedOffset += newRecommendations.size();
             for (Comic comic : newRecommendations) {
@@ -267,38 +281,39 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         heartButtons.put(likeButton, comic);
         URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
         URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
-    
+
         if (whiteHeartURL != null && redHeartURL != null) {
             ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
             ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
             Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-    
+
             String userEmail = parentFrame.getCurrentUserEmail();
-    
+
             // Remove existing action listeners safely
             ActionListener[] listeners = likeButton.getActionListeners();
             for (ActionListener listener : listeners) {
                 likeButton.removeActionListener(listener);
             }
-    
+
             if (userEmail == null || userEmail.isEmpty()) {
                 likeButton.setIcon(new ImageIcon(whiteHeartImage));
-                likeButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your library"));
+                likeButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your library"));
                 return;
             }
-    
+
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
             boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
-            
+
             // Set initial icon based on library status
             likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
-            
+
             // Add click handler
             likeButton.addActionListener(e -> {
                 boolean currentState = controller.isComicInLibrary(userId, comic.getId());
-                
+
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
@@ -311,21 +326,22 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             });
         }
     }
+
     @Override
     public void onUserLogin(String email) {
         recommendedOffset = 0;
         refreshHeartButtons(); // Refresh hearts in popular section
         updateRecommendations();
     }
-    
+
     private int getUserId(String email) {
         if (email == null || email.isEmpty()) {
             System.out.println("Email is null or empty"); // Debug log
             return -1;
         }
-        
+
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
+                PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
