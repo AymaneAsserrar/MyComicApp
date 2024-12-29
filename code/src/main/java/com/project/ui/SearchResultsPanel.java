@@ -26,6 +26,7 @@ public class SearchResultsPanel extends JPanel {
     private String currentSearchType;
     private JLabel searchResultsLabel;
     private Map<JButton, Comic> starButtons = new HashMap<>();
+    private Map<JButton, Comic> validationButtons = new HashMap<>();
 
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
@@ -113,9 +114,18 @@ public class SearchResultsPanel extends JPanel {
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         setupHeartButton(likeButton, comic);
 
+        // Create star button
+        JButton validationButton = new JButton();
+        validationButton.setFocusPainted(false);
+        validationButton.setBorderPainted(false);
+        validationButton.setContentAreaFilled(false);
+        validationButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupValidationButton(validationButton, comic);
+
         // Panel to hold both buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
+        buttonPanel.add(validationButton);
         buttonPanel.add(starButton);
         buttonPanel.add(likeButton);
 
@@ -266,6 +276,7 @@ public class SearchResultsPanel extends JPanel {
                     boolean currentState = controller.isComicInWishlist(userId, comic.getId());
                     if (currentState) {
                         if (controller.resetComicOwnership(userId, comic.getId())) {
+                            refreshValidationButtons();
                             starButton.setIcon(new ImageIcon(wStarImage));
                         }
                     } else {
@@ -278,12 +289,59 @@ public class SearchResultsPanel extends JPanel {
                             return;
                         }
                         if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
+                            refreshValidationButtons();
                             starButton.setIcon(new ImageIcon(yStarImage));
                         }
                     }
                 });
             }
         }
+    }
+
+    private void setupValidationButton(JButton validaButton, Comic comic) {
+        validationButtons.put(validaButton, comic);
+        URL blackValidationURL = getClass().getClassLoader().getResource("notOwned.png");
+        URL greenValidationURL = getClass().getClassLoader().getResource("Owned.png");
+
+        if (blackValidationURL != null && greenValidationURL != null) {
+            ImageIcon blackValidationIcon = new ImageIcon(blackValidationURL);
+            ImageIcon greenValidationIcon = new ImageIcon(greenValidationURL);
+            Image blackValidationImage = blackValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image greenValidationImage = greenValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame.getCurrentUserEmail();
+
+            if (userEmail == null) {
+                validaButton.setIcon(new ImageIcon(blackValidationImage));
+                validaButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your wishlist"));
+            } else {
+                UserLibraryController controller = new UserLibraryController();
+                int userId = getUserId(userEmail);
+                boolean isComicOwned = controller.isComicOwned(userId, comic.getId());
+                // Set initial icon based on wishlist status
+                validaButton.setIcon(
+                        isComicOwned ? new ImageIcon(greenValidationImage) : new ImageIcon(blackValidationImage));
+
+                // Add click handler
+                validaButton.addActionListener(e -> {
+                    boolean currentState = controller.isComicOwned(userId, comic.getId());
+                    if (currentState) {
+                        if (controller.resetComicOwnership(userId, comic.getId())) {
+                            refreshStarButtons();
+                            validaButton.setIcon(new ImageIcon(blackValidationImage));
+                        }
+                    } else {
+                        if (controller.updateComicOwnership(userId, comic.getId(), 1)) {
+                            refreshStarButtons();
+                            validaButton.setIcon(new ImageIcon(greenValidationImage));
+                        }
+                    }
+                });
+            }
+        }
+
     }
 
     private int getUserId(String email) {
@@ -302,6 +360,17 @@ public class SearchResultsPanel extends JPanel {
 
     public void refreshHeartButtons() {
         // Reload current search results to refresh heart buttons
+        if (currentSearchText != null && currentSearchType != null) {
+            loadResults();
+        }
+    }
+
+    public void refreshValidationButtons() {
+        // Refresh all star buttons
+        for (Map.Entry<JButton, Comic> entry : validationButtons.entrySet()) {
+            setupValidationButton(entry.getKey(), entry.getValue());
+        }
+        // Also reload current search results
         if (currentSearchText != null && currentSearchType != null) {
             loadResults();
         }
