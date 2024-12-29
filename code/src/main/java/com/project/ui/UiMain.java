@@ -234,7 +234,7 @@ public class UiMain extends JFrame {
         searchProfilePanel.add(profileButton);
         searchProfilePanel.revalidate();
         searchProfilePanel.repaint();
-
+        recommendationPanel.onUserLogout();
         recommendationPanel.updateLibraryMessage(false);
         libraryPanel.updateLibrary(null);
     }
@@ -274,56 +274,34 @@ public class UiMain extends JFrame {
     }
 
     public void displayHeroDetails(Hero hero, String sourcePanel) {
-
         HeroProfilePanel profilePanel = new HeroProfilePanel();
-
-        JEditorPane descriptionPane = new JEditorPane();
-        descriptionPane.setContentType("text/html");
-        descriptionPane.setEditable(false);
-
+    
         String description = hero.getDescription() != null
                 ? hero.getDescription()
                 : "<p style='color:gray;'>No description available.</p>";
-        descriptionPane.setText("<html><body style='font-family:sans-serif;'>" + description + "</body></html>");
-
-        JScrollPane scrollPane = new JScrollPane(descriptionPane);
-        scrollPane.setPreferredSize(new Dimension(450, 300));
-
-        ImageIcon heroImage = hero.getImageUrl() != null
-                ? new ImageIcon(hero.getImageUrl())
-                : new ImageIcon("https://via.placeholder.com/150");
-
+    
+        ImageIcon heroImage = null;
+        if (hero.getImageUrl() != null && !hero.getImageUrl().isEmpty()) {
+            try {
+                URL imageURL = new URL(hero.getImageUrl());
+                heroImage = new ImageIcon(imageURL);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    
         profilePanel.updateProfile(
                 hero.getName(),
-                "Character Details",
+                description,
                 heroImage,
                 hero.getTitles());
-
+    
         JDialog dialog = new JDialog(this, hero.getName(), true);
         dialog.setLayout(new BorderLayout());
-        dialog.add(profilePanel, BorderLayout.NORTH);
-        dialog.add(scrollPane, BorderLayout.CENTER);
-        dialog.setSize(500, 700);
+        dialog.add(profilePanel, BorderLayout.CENTER);
+        dialog.setSize(1000, 600); // Landscape size
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-
-        JButton fullscreenButton = new JButton("Fullscreen");
-        fullscreenButton.addActionListener(e -> {
-            JDialog fullscreenDialog = new JDialog();
-            fullscreenDialog.setTitle("Full Image");
-            JLabel fullImageLabel = new JLabel(heroImage);
-            JScrollPane fullScrollPane = new JScrollPane(fullImageLabel);
-            fullscreenDialog.add(fullScrollPane);
-            fullscreenDialog.setSize(800, 600);
-            fullscreenDialog.setLocationRelativeTo(this);
-            fullscreenDialog.setVisible(true);
-        });
-
-        // Redimensionnement de l'image principale
-        Image scaledImage = heroImage.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaledImage);
-        JLabel imageLabel = new JLabel(scaledIcon);
-
     }
 
     public void refreshAllPanels() {

@@ -53,7 +53,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         // Initialize message label
-        this.libraryMessageLabel = new JLabel();
+        this.libraryMessageLabel = new JLabel("Your library message here");
         libraryMessageLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         libraryMessageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -100,6 +100,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
         // Add main scroll pane to panel
         add(mainScrollPane, BorderLayout.CENTER);
+        add(libraryMessageLabel, BorderLayout.SOUTH);
 
         // Initialize controllers and load content
         recommendationController = new RecommendationController();
@@ -173,6 +174,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
+        
+
     }
 
     private void initializeRecommendationSection(JPanel mainScrollContent) {
@@ -198,8 +201,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendedScrollPane.setPreferredSize(new Dimension(1000, 400));
 
         recommendationsPanel.add(recommendationsLabel, BorderLayout.NORTH);
-        recommendationsPanel.add(recommendedScrollPane, BorderLayout.CENTER);
         recommendationsPanel.add(libraryMessageLabel, BorderLayout.SOUTH);
+        recommendationsPanel.add(recommendedScrollPane, BorderLayout.CENTER);
 
         mainScrollContent.add(Box.createVerticalStrut(20));
         mainScrollContent.add(recommendationsPanel);
@@ -288,14 +291,13 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
 
-            String userEmail = parentFrame.getCurrentUserEmail();
-
-            // Remove existing action listeners safely
-            ActionListener[] listeners = likeButton.getActionListeners();
-            for (ActionListener listener : listeners) {
+            // Remove existing listeners to avoid duplicates
+            for (ActionListener listener : likeButton.getActionListeners()) {
                 likeButton.removeActionListener(listener);
             }
 
+            // Always re-fetch the user email so it's correct after sign-up
+            String userEmail = parentFrame.getCurrentUserEmail();
             if (userEmail == null || userEmail.isEmpty()) {
                 likeButton.setIcon(new ImageIcon(whiteHeartImage));
                 likeButton.addActionListener(
@@ -306,14 +308,10 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
             boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
-
-            // Set initial icon based on library status
             likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
 
-            // Add click handler
             likeButton.addActionListener(e -> {
                 boolean currentState = controller.isComicInLibrary(userId, comic.getId());
-
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
@@ -323,6 +321,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         likeButton.setIcon(new ImageIcon(redHeartImage));
                     }
                 }
+                parentFrame.refreshAllPanels(); // Force a UI refresh in RecommendationPanel
             });
         }
     }
@@ -358,10 +357,25 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     public void updateLibraryMessage(boolean isSignedIn) {
-        if (isSignedIn) {
-            libraryMessageLabel.setText("This section will be implemented soon");
-        } else {
+        if (!isSignedIn) {
+            // Clear recommendations when signed out
+            recommendedOffset = 0;
+            recommendedGridPanel.removeAll();
             libraryMessageLabel.setText("You are not signed in yet");
+            recommendedGridPanel.revalidate();
+            recommendedGridPanel.repaint();
+        } else {
+            updateRecommendations();
         }
+    }
+
+    // Add this to handle sign out
+    public void onUserLogout() {
+        recommendedOffset = 0;
+        recommendedGridPanel.removeAll();
+        libraryMessageLabel.setText("You are not signed in yet");
+        recommendedGridPanel.revalidate();
+        recommendedGridPanel.repaint();
+        refreshHeartButtons();
     }
 }
