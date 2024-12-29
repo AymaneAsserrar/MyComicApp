@@ -280,21 +280,27 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
             boolean isComicInWishlist = controller.isComicInWishlist(userId, comic.getId());
-
             // Set initial icon based on wishlist status
             starButton.setIcon(isComicInWishlist ? new ImageIcon(yStarImage) : new ImageIcon(wStarImage));
 
             // Add click handler
             starButton.addActionListener(e -> {
                 boolean currentState = controller.isComicInWishlist(userId, comic.getId());
-
                 if (currentState) {
                     if (controller.resetComicOwnership(userId, comic.getId())) {
                         starButton.setIcon(new ImageIcon(wStarImage));
                     }
                 } else {
-                    if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
-                        starButton.setIcon(new ImageIcon(yStarImage));
+                    if (controller.isComicInLibrary(userId, comic.getId())) {
+                        if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
+                            starButton.setIcon(new ImageIcon(yStarImage));
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "Please add the comic to your library first before adding it to your wishlist",
+                                "Not in Library",
+                                JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
             });

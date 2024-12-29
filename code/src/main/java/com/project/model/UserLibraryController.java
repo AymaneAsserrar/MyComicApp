@@ -177,7 +177,7 @@ public class UserLibraryController {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1) > 0; // Check if count is greater than 0
+                    return rs.getInt(1) > 0;
                 }
             }
         } catch (Exception e) {
