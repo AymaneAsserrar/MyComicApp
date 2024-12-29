@@ -67,20 +67,19 @@ public class LoginForm extends JDialog {
         });
         panel.add(loginButton, gbc);
 
-        // Forgot Password Button
+     // Forgot Password Button
         gbc.gridy = 4;
         JButton forgotPasswordButton = new JButton("Forgot Password?");
         forgotPasswordButton.setForeground(Color.GRAY);
         forgotPasswordButton.setBorderPainted(false);
         forgotPasswordButton.setContentAreaFilled(false);
         forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        forgotPasswordButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(LoginForm.this, "Redirecting to Forgot Password");
-            }
+        forgotPasswordButton.addActionListener(e -> {
+            ResetPasswordPanel resetPasswordPanel = new ResetPasswordPanel(parent);
+            resetPasswordPanel.setVisible(true); // Open the dialog
         });
         panel.add(forgotPasswordButton, gbc);
+
 
         // Sign Up Button
         gbc.gridy = 5;

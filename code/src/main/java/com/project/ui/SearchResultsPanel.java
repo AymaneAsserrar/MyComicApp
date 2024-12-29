@@ -36,7 +36,8 @@ public class SearchResultsPanel extends JPanel {
         resultsGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         resultsGridPanel.setBackground(new Color(255, 255, 255)); // White background for comics grid
 
-        JScrollPane scrollPane = new JScrollPane(resultsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(resultsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(48); // Increase scroll speed
         add(scrollPane, BorderLayout.CENTER);
 
@@ -92,8 +93,7 @@ public class SearchResultsPanel extends JPanel {
         // Shadow effect
         comicPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(Color.LIGHT_GRAY, 1),
-                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))
-        ));
+                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
         // Heart-shaped button
         JButton likeButton = new JButton();
@@ -144,50 +144,60 @@ public class SearchResultsPanel extends JPanel {
     }
 
     private void addHeroPanel(Hero hero) {
-        // Création du panneau principal pour chaque héros
+        // Create panel with same dimensions and style as comic panels
         JPanel heroPanel = new JPanel(new BorderLayout());
-        heroPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    
-        // Ajout de l'image du personnage
-        JLabel coverLabel;
+        heroPanel.setPreferredSize(new Dimension(200, 300));
+        heroPanel.setBackground(Color.WHITE);
+
+        // Add same shadow effect
+        heroPanel.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Color.LIGHT_GRAY, 1),
+                BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
+
+        // Cover image with same dimensions
+        JLabel coverLabel = new JLabel();
+        coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         try {
             URL imageURL = new URL(hero.getImageUrl());
             ImageIcon icon = new ImageIcon(imageURL);
-            Image img = icon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-            coverLabel = new JLabel(new ImageIcon(img));
+            Image img = icon.getImage().getScaledInstance(180, 250, Image.SCALE_SMOOTH);
+            coverLabel.setIcon(new ImageIcon(img));
         } catch (Exception e) {
-            coverLabel = new JLabel("Image unavailable");
+            coverLabel.setText("Image unavailable");
+            coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         }
-    
-        // Ajout du nom du personnage
+
+        // Title label with same styling
         JLabel titleLabel = new JLabel(hero.getName(), SwingConstants.CENTER);
-        heroPanel.add(coverLabel, BorderLayout.CENTER);
-        heroPanel.add(titleLabel, BorderLayout.SOUTH);
-    
-        // Ajout du MouseListener pour récupérer les détails du personnage
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        titleLabel.setForeground(Color.BLACK);
+        titleLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
+
+        // Add click behavior
         heroPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         heroPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 Hero detailedHero = searchController.getCharacterDetails(hero.getId());
                 if (detailedHero != null) {
-                    // Appelle UiMain pour afficher les détails dans HeroProfilePanel
                     UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(SearchResultsPanel.this);
                     parentFrame.displayHeroDetails(detailedHero, "SearchResults");
-                } else {
-                    JOptionPane.showMessageDialog(SearchResultsPanel.this, "Details not found for character ID: " + hero.getId());
                 }
             }
         });
-    
-        // Ajout du panneau dans resultsGridPanel
+
+        // Add components to panel
+        heroPanel.add(coverLabel, BorderLayout.CENTER);
+        heroPanel.add(titleLabel, BorderLayout.SOUTH);
+
+        // Add to grid
         resultsGridPanel.add(heroPanel);
     }
 
     private void setupHeartButton(JButton likeButton, Comic comic) {
         URL whiteHeartURL = getClass().getClassLoader().getResource("white.png");
         URL redHeartURL = getClass().getClassLoader().getResource("heart.png");
-        
+
         if (whiteHeartURL != null && redHeartURL != null) {
             ImageIcon whiteHeartIcon = new ImageIcon(whiteHeartURL);
             ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
@@ -203,6 +213,7 @@ public class SearchResultsPanel extends JPanel {
                 likeButton.removeActionListener(listener);
             }
             
+
             if (userEmail == null) {
                 likeButton.setIcon(new ImageIcon(whiteHeartImage));
                 likeButton.addActionListener(e -> {
@@ -238,7 +249,7 @@ public class SearchResultsPanel extends JPanel {
 
     private int getUserId(String email) {
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
+                PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -249,6 +260,7 @@ public class SearchResultsPanel extends JPanel {
         }
         return -1;
     }
+
     public void refreshHeartButtons() {
         // Reload current search results to refresh heart buttons
         if (currentSearchText != null && currentSearchType != null) {
