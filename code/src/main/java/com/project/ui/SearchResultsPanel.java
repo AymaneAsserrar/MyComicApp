@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.List;
 import java.sql.Connection;
@@ -192,9 +193,15 @@ public class SearchResultsPanel extends JPanel {
             ImageIcon redHeartIcon = new ImageIcon(redHeartURL);
             Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-
+    
             UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
             String userEmail = parentFrame.getCurrentUserEmail();
+            
+            // Remove existing action listeners
+            ActionListener[] listeners = likeButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                likeButton.removeActionListener(listener);
+            }
             
             if (userEmail == null) {
                 likeButton.setIcon(new ImageIcon(whiteHeartImage));
@@ -203,12 +210,26 @@ public class SearchResultsPanel extends JPanel {
                 });
             } else {
                 UserLibraryController controller = new UserLibraryController();
-                boolean isInLibrary = controller.isComicInLibrary(getUserId(userEmail), comic.getId());
+                int userId = getUserId(userEmail);
+                boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
+                
+                // Set initial icon based on library status
                 likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
                 
+                // Add click handler
                 likeButton.addActionListener(e -> {
-                    if (!isInLibrary && controller.addComicToLibrary(getUserId(userEmail), comic)) {
-                        likeButton.setIcon(new ImageIcon(redHeartImage));
+                    boolean currentState = controller.isComicInLibrary(userId, comic.getId());
+                    
+                    if (currentState) {
+                        if (controller.removeComicFromLibrary(userId, comic.getId())) {
+                            likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                            parentFrame.refreshAllPanels(); // Refresh all panels to update the UI
+                        }
+                    } else {
+                        if (controller.addComicToLibrary(userId, comic)) {
+                            likeButton.setIcon(new ImageIcon(redHeartImage));
+                            parentFrame.refreshAllPanels(); // Refresh all panels to update the UI
+                        }
                     }
                 });
             }
