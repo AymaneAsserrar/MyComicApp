@@ -28,12 +28,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private JLabel libraryMessageLabel;
     private Map<JButton, Comic> heartButtons;
     private Map<JButton, Comic> starButtons;
+    private Map<JButton, Comic> validationButtons;
     private UiMain parentFrame;
 
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
         this.heartButtons = new HashMap<>();
         this.starButtons = new HashMap<>();
+        this.validationButtons = new HashMap<>();
         parentFrame.addLoginListener(this);
 
         setLayout(new BorderLayout());
@@ -141,9 +143,18 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         starButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         setupStarButton(starButton, comic);
 
+        // Create star button
+        JButton validationButton = new JButton();
+        validationButton.setFocusPainted(false);
+        validationButton.setBorderPainted(false);
+        validationButton.setContentAreaFilled(false);
+        validationButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupValidationButton(validationButton, comic);
+
         // Panel to hold heart and star buttons side by side
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
+        buttonPanel.add(validationButton);
         buttonPanel.add(starButton);
         buttonPanel.add(likeButton);
 
@@ -234,6 +245,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         refreshStarButtons();
+                        refreshValidationButton();
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
                     }
                 } else {
@@ -288,11 +300,13 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                 boolean currentState = controller.isComicInWishlist(userId, comic.getId());
                 if (currentState) {
                     if (controller.resetComicOwnership(userId, comic.getId())) {
+                        refreshValidationButton();
                         starButton.setIcon(new ImageIcon(wStarImage));
                     }
                 } else {
                     if (controller.isComicInLibrary(userId, comic.getId())) {
                         if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
+                            refreshValidationButton();
                             starButton.setIcon(new ImageIcon(yStarImage));
                         }
                     } else {
@@ -307,10 +321,69 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         }
     }
 
+    public void refreshValidationButton() {
+        for (Map.Entry<JButton, Comic> entry : validationButtons.entrySet()) {
+            setupValidationButton(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void setupValidationButton(JButton validaButton, Comic comic) {
+        validationButtons.put(validaButton, comic);
+        URL blackValidationURL = getClass().getClassLoader().getResource("notOwned.png");
+        URL greenValidationURL = getClass().getClassLoader().getResource("Owned.png");
+
+        if (blackValidationURL != null && greenValidationURL != null) {
+            ImageIcon blackValidationIcon = new ImageIcon(blackValidationURL);
+            ImageIcon greenValidationIcon = new ImageIcon(greenValidationURL);
+            Image blackValidationImage = blackValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image greenValidationImage = greenValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            String userEmail = parentFrame.getCurrentUserEmail();
+
+            // Remove existing action listeners safely
+            ActionListener[] listeners = validaButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                validaButton.removeActionListener(listener);
+            }
+
+            if (userEmail == null || userEmail.isEmpty()) {
+                validaButton.setIcon(new ImageIcon(blackValidationImage));
+                validaButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your owned list"));
+                return;
+            }
+
+            int userId = getUserId(userEmail);
+            UserLibraryController controller = new UserLibraryController();
+            boolean isComicOwned = controller.isComicOwned(userId, comic.getId());
+            // Set initial icon based on wishlist status
+            validaButton.setIcon(
+                    isComicOwned ? new ImageIcon(greenValidationImage) : new ImageIcon(blackValidationImage));
+
+            // Add click handler
+            validaButton.addActionListener(e -> {
+                boolean currentState = controller.isComicOwned(userId, comic.getId());
+                if (currentState) {
+                    if (controller.resetComicOwnership(userId, comic.getId())) {
+                        refreshStarButtons();
+                        validaButton.setIcon(new ImageIcon(blackValidationImage));
+                    }
+                } else {
+                    if (controller.updateComicOwnership(userId, comic.getId(), 1)) {
+                        refreshStarButtons();
+                        validaButton.setIcon(new ImageIcon(greenValidationImage));
+                    }
+                }
+            });
+        }
+
+    }
+
     @Override
     public void onUserLogin(String email) {
         refreshHeartButtons();
         refreshStarButtons();
+        refreshValidationButton();
     }
 
     private int getUserId(String email) {

@@ -326,12 +326,13 @@ public class UiMain extends JFrame {
         if (recommendationPanel != null) {
             recommendationPanel.refreshHeartButtons();
             recommendationPanel.refreshStarButtons();
+            recommendationPanel.refreshValidationButton();
         }
 
         // Refresh search results panel
         if (searchResultsPanel != null) {
             searchResultsPanel.refreshHeartButtons();
-            recommendationPanel.refreshStarButtons();
+            searchResultsPanel.refreshStarButtons();
         }
 
         // Refresh library panel

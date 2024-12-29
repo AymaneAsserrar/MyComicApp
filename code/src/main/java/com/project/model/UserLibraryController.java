@@ -142,9 +142,6 @@ public class UserLibraryController {
     }
 
     public boolean resetComicOwnership(int userId, int comicId) {
-        if (!isComicInWishlist(userId, comicId)) {
-            return false;
-        }
         String query = "UPDATE biblio "
                 + "SET possede = NULL "
                 + "WHERE id_biblio = ? AND id_comic = ?;";
@@ -185,4 +182,26 @@ public class UserLibraryController {
         }
         return false;
     }
+
+    /**
+     * Checks if a comic is in user's wishlist
+     */
+    public boolean isComicOwned(int userId, int comicId) {
+        String query = "SELECT possede FROM biblio WHERE id_biblio = ? AND id_comic = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, comicId);
+
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt("possede") == 1;
+
+        } catch (SQLException e) {
+            System.err.println("Error checking comic in library: " + e.getMessage());
+            return false;
+        }
+    }
+
 }
