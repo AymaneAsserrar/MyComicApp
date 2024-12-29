@@ -245,4 +245,11 @@ public class SearchResultsPanel extends JPanel {
             loadResults();
         }
     }
+
+    public void refreshStarButtons() {
+        // Reload current search results to refresh heart buttons
+        if (currentSearchText != null && currentSearchType != null) {
+            loadResults();
+        }
+    }
 }
