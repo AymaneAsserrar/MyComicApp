@@ -15,59 +15,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class API {
-    private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
-    private static final String API_KEY = "e22bd0a8fe36c642d47999f6e61f8e252a717ec7";
-    private static OkHttpClient client;
+	private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
+	private static final String API_KEY = "e22bd0a8fe36c642d47999f6e61f8e252a717ec7";
+	private static OkHttpClient client;
 
-    static {
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .build();
-    }
+	static {
+		HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+		logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+		client = new OkHttpClient.Builder()
+				.addInterceptor(logging)
+				.build();
+	}
 
 	public String getPopularComics(int offset, int limit) {
-        String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
-                "date_added,date_last_updated,first_issue,last_issue," +
-                "publisher,start_year,character_credits,rating";
-
-        String endpoint = "volumes/?api_key=" + API_KEY 
-                + "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit 
-                + "&field_list=" + fieldList;
-        String url = BASE_URL + endpoint;
-
-        Request request = new Request.Builder()
-                .url(url)
-                .header("User-Agent", "ComicApp/1.0")
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Request error: HTTP Code " + response.code());
-            }
-            return response.body() != null ? response.body().string() : null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-	
-	public String getComicDetails(int comicId) {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
-		"date_added,date_last_updated,first_issue,last_issue," +
-		"publisher,start_year,character_credits,rating,concepts";  // Add concepts to fieldList
+				"date_added,date_last_updated,first_issue,last_issue," +
+				"publisher,start_year,character_credits,rating";
 
-		String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY
-				+ "&format=json&field_list=" + fieldList;
+		String endpoint = "volumes/?api_key=" + API_KEY
+				+ "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit
+				+ "&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
-	
+
 		Request request = new Request.Builder()
 				.url(url)
 				.header("User-Agent", "ComicApp/1.0")
 				.build();
-	
+
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
 				throw new IOException("Request error: HTTP Code " + response.code());
@@ -78,26 +52,55 @@ public class API {
 			return null;
 		}
 	}
-    public Comic parseComicDetails(JsonObject volumeJson) {
+
+	public String getComicDetails(int comicId) {
+		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
+				"date_added,date_last_updated,first_issue,last_issue," +
+				"publisher,start_year,character_credits,rating,concepts"; // Add concepts to fieldList
+
+		String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY
+				+ "&format=json&field_list=" + fieldList;
+		String url = BASE_URL + endpoint;
+
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Request error: HTTP Code " + response.code());
+			}
+			return response.body() != null ? response.body().string() : null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public Comic parseComicDetails(JsonObject volumeJson) {
 		Comic comic = new Comic();
-		
+
 		// Basic fields with null checks
 		comic.setId(volumeJson.has("id") ? volumeJson.get("id").getAsInt() : 0);
 		comic.setName(getJsonString(volumeJson, "name", "Unknown Title"));
 		comic.setDeck(getJsonString(volumeJson, "deck", "No summary available."));
 		comic.setDescription(getJsonString(volumeJson, "description", "No description available."));
-	
+
 		// Parse image
 		if (volumeJson.has("image") && !volumeJson.get("image").isJsonNull()) {
 			JsonObject imageJson = volumeJson.getAsJsonObject("image");
 			// Try different image sizes in order of preference
 			String imageUrl = getJsonString(imageJson, "medium_url", null);
-			if (imageUrl == null) imageUrl = getJsonString(imageJson, "screen_url", null);
-			if (imageUrl == null) imageUrl = getJsonString(imageJson, "super_url", null);
-			if (imageUrl == null) imageUrl = getJsonString(imageJson, "original_url", "https://via.placeholder.com/150");
+			if (imageUrl == null)
+				imageUrl = getJsonString(imageJson, "screen_url", null);
+			if (imageUrl == null)
+				imageUrl = getJsonString(imageJson, "super_url", null);
+			if (imageUrl == null)
+				imageUrl = getJsonString(imageJson, "original_url", "https://via.placeholder.com/150");
 			comic.setCoverImageUrl(imageUrl);
 		}
-	
+
 		// Parse characters array into heroes
 		if (volumeJson.has("characters") && !volumeJson.get("characters").isJsonNull()) {
 			JsonArray charactersArray = volumeJson.getAsJsonArray("characters");
@@ -116,34 +119,34 @@ public class API {
 			}
 			comic.setHeroes(charactersList);
 		}
-	
+
 		// Set other fields that might be available from the full volume endpoint
 		if (volumeJson.has("count_of_issues")) {
 			comic.setIssueCount(volumeJson.get("count_of_issues").getAsInt());
 		}
-	
+
 		if (volumeJson.has("publisher") && !volumeJson.get("publisher").isJsonNull()) {
 			JsonObject publisherJson = volumeJson.getAsJsonObject("publisher");
 			comic.setPublisherName(getJsonString(publisherJson, "name", "Unknown Publisher"));
 		}
-	
+
 		// Set dates
 		comic.setDateAdded(getJsonString(volumeJson, "date_added", "Unknown"));
 		comic.setDateLastUpdated(getJsonString(volumeJson, "date_last_updated", "Unknown"));
-	
+
 		// Set issue info
 		if (volumeJson.has("first_issue") && !volumeJson.get("first_issue").isJsonNull()) {
 			JsonObject firstIssue = volumeJson.getAsJsonObject("first_issue");
 			comic.setFirstIssue(getJsonString(firstIssue, "name", "Unknown"));
 		}
-	
+
 		if (volumeJson.has("last_issue") && !volumeJson.get("last_issue").isJsonNull()) {
 			JsonObject lastIssue = volumeJson.getAsJsonObject("last_issue");
 			comic.setLastIssue(getJsonString(lastIssue, "name", "Unknown"));
 		}
-	
+
 		comic.setStartYear(getJsonString(volumeJson, "start_year", "Unknown"));
-	
+
 		// Set teams
 		if (volumeJson.has("team_credits") && !volumeJson.get("team_credits").isJsonNull()) {
 			JsonArray teamsArray = volumeJson.getAsJsonArray("team_credits");
@@ -157,56 +160,56 @@ public class API {
 			}
 			comic.setTeams(teamsList);
 		}
-	
+
 		// Set rating
 		comic.setRating(getJsonString(volumeJson, "rating", "N/A"));
 
-		// Add genres parsing
-        if (volumeJson.has("concepts") && !volumeJson.get("concepts").isJsonNull()) {
-            JsonArray conceptsArray = volumeJson.getAsJsonArray("concepts");
-            List<String> genresList = new ArrayList<>();
-            for (JsonElement conceptElement : conceptsArray) {
-                JsonObject conceptJson = conceptElement.getAsJsonObject();
-                String genreName = getJsonString(conceptJson, "name", "");
-                if (!genreName.isEmpty()) {
-                    genresList.add(genreName);
-                }
-            }
-            comic.setGenres(genresList);
-        }
-	
+		if (volumeJson.has("concepts") && !volumeJson.get("concepts").isJsonNull()) {
+			JsonArray conceptsArray = volumeJson.getAsJsonArray("concepts");
+			List<String> genresList = new ArrayList<>();
+			for (JsonElement conceptElement : conceptsArray) {
+				JsonObject conceptJson = conceptElement.getAsJsonObject();
+				String genreName = getJsonString(conceptJson, "name", "");
+				if (!genreName.isEmpty()) {
+					genresList.add(genreName);
+				}
+			}
+			comic.setGenres(genresList);
+		}
+
 		return comic;
 	}
 
-    private String getJsonString(JsonObject json, String key, String defaultValue) {
-        if (json != null && json.has(key) && !json.get(key).isJsonNull()) {
-            return json.get(key).getAsString();
-        }
-        return defaultValue;
-    }
-    public String searchComicsByTitle(String title) {
-        String fieldList = "id,name,description,deck,image,person_credits," +
-                "character_credits,rating,concepts";  // Add concepts to fieldList
-        String endpoint = "search/?api_key=" + API_KEY 
-                + "&format=json&resources=volume&query=" + title
-                + "&field_list=" + fieldList;
-        String url = BASE_URL + endpoint;
+	private String getJsonString(JsonObject json, String key, String defaultValue) {
+		if (json != null && json.has(key) && !json.get(key).isJsonNull()) {
+			return json.get(key).getAsString();
+		}
+		return defaultValue;
+	}
 
-        Request request = new Request.Builder()
-                .url(url)
-                .header("User-Agent", "ComicApp/1.0")
-                .build();
+	public String searchComicsByTitle(String title) {
+		String fieldList = "id,name,description,deck,image,person_credits," +
+				"character_credits,rating,concepts"; // Add concepts to fieldList
+		String endpoint = "search/?api_key=" + API_KEY
+				+ "&format=json&resources=volume&query=" + title
+				+ "&field_list=" + fieldList;
+		String url = BASE_URL + endpoint;
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Request error: HTTP Code " + response.code());
-            }
-            return response.body() != null ? response.body().string() : null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Request error: HTTP Code " + response.code());
+			}
+			return response.body() != null ? response.body().string() : null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	// Méthode pour chercher des personnages
 	public String fetchCharacterData(String name) {
@@ -228,15 +231,16 @@ public class API {
 			return null;
 		}
 	}
+
 	public String fetchCharacterDetails(int characterId) {
 		String endpoint = "character/4005-" + characterId + "/?api_key=" + API_KEY + "&format=json";
 		String url = BASE_URL + endpoint;
-		
+
 		Request request = new Request.Builder()
 				.url(url)
 				.header("User-Agent", "ComicApp/1.0")
 				.build();
-	
+
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
 				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
@@ -246,15 +250,79 @@ public class API {
 			e.printStackTrace();
 			return null;
 		}
-	}	
+	}
+
 	public Hero parseHeroDetails(JsonObject resultsObject) {
 		Hero hero = new Hero();
 		hero.setId(resultsObject.get("id").getAsInt());
 		hero.setName(resultsObject.get("name").getAsString());
 		hero.setRealName(resultsObject.has("real_name") ? resultsObject.get("real_name").getAsString() : "Unknown");
 		hero.setImageUrl(resultsObject.getAsJsonObject("image").get("url").getAsString());
-		hero.setDescription(resultsObject.has("description") ? resultsObject.get("description").getAsString() : "No description available");
+		hero.setDescription(resultsObject.has("description") ? resultsObject.get("description").getAsString()
+				: "No description available");
 		return hero;
 	}
 
+	public String searchComicsByGenres(String genres, int offset, int limit) {
+		// First get concept IDs for genres
+		String conceptFieldList = "id,name";
+		String conceptEndpoint = String.format("concepts/?api_key=%s&format=json&filter=name:%s&field_list=%s",
+				API_KEY, genres, conceptFieldList);
+
+		String conceptUrl = BASE_URL + conceptEndpoint;
+		Request conceptRequest = new Request.Builder()
+				.url(conceptUrl)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response conceptResponse = client.newCall(conceptRequest).execute()) {
+			if (!conceptResponse.isSuccessful()) {
+				throw new IOException("Error getting concepts: HTTP " + conceptResponse.code());
+			}
+
+			String conceptJson = conceptResponse.body() != null ? conceptResponse.body().string() : null;
+			if (conceptJson == null)
+				return null;
+
+			// Parse concept IDs
+			JsonObject conceptObj = new Gson().fromJson(conceptJson, JsonObject.class);
+			JsonArray conceptResults = conceptObj.getAsJsonArray("results");
+
+			if (conceptResults.size() == 0)
+				return null;
+
+			// Build concept ID filter for volumes
+			StringBuilder conceptFilter = new StringBuilder();
+			for (int i = 0; i < conceptResults.size(); i++) {
+				if (i > 0)
+					conceptFilter.append("|");
+				conceptFilter.append(conceptResults.get(i).getAsJsonObject().get("id").getAsInt());
+			}
+
+			// Now get volumes with these concepts
+			String volumeFieldList = "id,name,description,deck,image,characters,count_of_issues," +
+					"date_added,date_last_updated,first_issue,last_issue," +
+					"publisher,start_year,character_credits,rating,concepts";
+
+			String volumeEndpoint = String.format(
+					"volumes/?api_key=%s&format=json&offset=%d&limit=%d&filter=concept:%s&field_list=%s",
+					API_KEY, offset, limit, conceptFilter.toString(), volumeFieldList);
+
+			String volumeUrl = BASE_URL + volumeEndpoint;
+			Request volumeRequest = new Request.Builder()
+					.url(volumeUrl)
+					.header("User-Agent", "ComicApp/1.0")
+					.build();
+
+			try (Response volumeResponse = client.newCall(volumeRequest).execute()) {
+				if (!volumeResponse.isSuccessful()) {
+					throw new IOException("Error getting volumes: HTTP " + volumeResponse.code());
+				}
+				return volumeResponse.body() != null ? volumeResponse.body().string() : null;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 }

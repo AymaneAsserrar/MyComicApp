@@ -25,22 +25,37 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private RecommendationController recommendationController;
     private int currentOffset = 0;
     private static final int PAGE_SIZE = 10;
+    private static final int RECOMMENDATION_PAGE_SIZE = 12;
     private JLabel libraryMessageLabel;
     private Map<JButton, Comic> heartButtons;
     private UiMain parentFrame;
+    private JPanel recommendedGridPanel;
+    private int recommendedOffset = 0;
 
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
         this.heartButtons = new HashMap<>();
+        this.recommendationController = new RecommendationController();
         parentFrame.addLoginListener(this);
 
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // Main content panel to hold both sections
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBackground(new Color(240, 240, 240));
+        // Main scrollable content panel
+        JPanel mainScrollContent = new JPanel();
+        mainScrollContent.setLayout(new BoxLayout(mainScrollContent, BoxLayout.Y_AXIS));
+        mainScrollContent.setBackground(new Color(240, 240, 240));
+
+        // Create a scroll pane for the entire content
+        JScrollPane mainScrollPane = new JScrollPane(mainScrollContent);
+        mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Initialize message label
+        this.libraryMessageLabel = new JLabel();
+        libraryMessageLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        libraryMessageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Popular Comics Section
         JPanel popularPanel = new JPanel(new BorderLayout());
@@ -59,11 +74,11 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
         JScrollPane scrollPane = new JScrollPane(comicsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(48); // Increase scroll speed
-        scrollPane.setPreferredSize(new Dimension(1000, 500)); 
+        scrollPane.setPreferredSize(new Dimension(1000, 400)); // Reduced height
         popularPanel.add(scrollPane, BorderLayout.CENTER);
 
         recommendationController = new RecommendationController();
-        loadComics(currentOffset);
+        loadPopularComics(currentOffset);
 
         // Add load more button
         JButton loadMoreButton = new JButton("→");
@@ -74,45 +89,34 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         loadMoreButton.setBorderPainted(false);
         loadMoreButton.setContentAreaFilled(false);
         loadMoreButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        loadMoreButton.addActionListener(e -> loadComics(currentOffset));
+        loadMoreButton.addActionListener(e -> loadPopularComics(currentOffset));
         comicsGridPanel.add(loadMoreButton);
 
-        // Your Library Section
-        JPanel libraryPanel = new JPanel(new BorderLayout());
-        libraryPanel.setBackground(new Color(255, 255, 255));
-        libraryPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Add panels to main scroll content
+        mainScrollContent.add(popularPanel);
+        mainScrollContent.add(Box.createVerticalStrut(20)); // Spacing between sections
+        initializeRecommendationSection(mainScrollContent);
 
-        JLabel libraryTitle = new JLabel("Recommendations", SwingConstants.CENTER);
-        libraryTitle.setFont(new Font("Arial", Font.BOLD, 24));
-        libraryTitle.setBorder(new EmptyBorder(20, 0, 20, 0));
-        libraryPanel.add(libraryTitle, BorderLayout.NORTH);
+        // Add main scroll pane to panel
+        add(mainScrollPane, BorderLayout.CENTER);
 
-        libraryMessageLabel = new JLabel("You are not signed in yet", SwingConstants.CENTER);
-        libraryMessageLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        libraryMessageLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-        libraryPanel.add(libraryMessageLabel, BorderLayout.CENTER);
-
-        // Adjust height if needed
-        libraryPanel.setPreferredSize(new Dimension(1000, 300));
-
-        contentPanel.add(popularPanel);
-        contentPanel.add(libraryPanel);
-
-        // Add the content panel to the main panel
-        add(contentPanel, BorderLayout.CENTER);
+        // Initialize controllers and load content
+        recommendationController = new RecommendationController();
+        loadPopularComics(currentOffset);
+        updateRecommendations();
     }
 
-    private void loadComics(int offset) {
+    private void loadPopularComics(int offset) {
         List<Comic> recommendationList = recommendationController.getPopularComics(offset, PAGE_SIZE);
         for (Comic comic : recommendationList) {
-            addComicPanel(comic);
+            addComicPanel(comic, comicsGridPanel);
         }
         currentOffset += recommendationList.size();
         revalidate();
         repaint();
     }
 
-    private void addComicPanel(Comic comic) {
+    private void addComicPanel(Comic comic, JPanel targetPanel) {
         JPanel comicPanel = new JPanel(new BorderLayout());
         comicPanel.setPreferredSize(new Dimension(200, 300));
         comicPanel.setBackground(Color.WHITE);
@@ -168,13 +172,95 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
-        comicsGridPanel.add(comicPanel, comicsGridPanel.getComponentCount() - 1);
+        targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
+    }
+
+    private void initializeRecommendationSection(JPanel mainScrollContent) {
+        // Recommendations Section
+        JPanel recommendationsPanel = new JPanel(new BorderLayout());
+        recommendationsPanel.setBackground(Color.WHITE);
+        recommendationsPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JLabel recommendationsLabel = new JLabel("Recommended For You", SwingConstants.CENTER);
+        recommendationsLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        recommendationsLabel.setForeground(Color.BLACK);
+        recommendationsLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+
+        recommendedGridPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
+        recommendedGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        recommendedGridPanel.setBackground(Color.WHITE);
+
+        // Create horizontal scroll pane for recommendations
+        JScrollPane recommendedScrollPane = new JScrollPane(recommendedGridPanel);
+        recommendedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        recommendedScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        recommendedScrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+        recommendedScrollPane.setPreferredSize(new Dimension(1000, 400));
+
+        recommendationsPanel.add(recommendationsLabel, BorderLayout.NORTH);
+        recommendationsPanel.add(recommendedScrollPane, BorderLayout.CENTER);
+        recommendationsPanel.add(libraryMessageLabel, BorderLayout.SOUTH);
+
+        mainScrollContent.add(Box.createVerticalStrut(20));
+        mainScrollContent.add(recommendationsPanel);
+    }
+
+    private void updateRecommendations() {
+        recommendedGridPanel.removeAll();
+        String userEmail = parentFrame.getCurrentUserEmail();
+        
+        if (userEmail == null || userEmail.isEmpty()) {
+            libraryMessageLabel.setText("You are not signed in yet");
+            recommendedGridPanel.removeAll();
+            recommendedGridPanel.revalidate();
+            recommendedGridPanel.repaint();
+            return;
+        }
+
+        int userId = getUserId(userEmail);
+        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0, RECOMMENDATION_PAGE_SIZE);
+
+        if (recommendations.isEmpty()) {
+            libraryMessageLabel.setText("Please add a comic to your library to get recommendations");
+            return;
+        }
+
+        libraryMessageLabel.setText("");
+
+        for (Comic comic : recommendations) {
+            addComicPanel(comic, recommendedGridPanel);
+        }
+
+        // Add load more button if there are recommendations
+        if (!recommendations.isEmpty()) {
+            addLoadMoreButton(recommendedGridPanel, userId);
+        }
+
+        recommendedGridPanel.revalidate();
+        recommendedGridPanel.repaint();
+    }
+
+    private void loadMoreRecommendations(int userId) {
+        List<Comic> newRecommendations = recommendationController.getRecommendedComics(userId, 
+            recommendedOffset, 12);
+        if (!newRecommendations.isEmpty()) {
+            recommendedOffset += newRecommendations.size();
+            for (Comic comic : newRecommendations) {
+                addComicPanel(comic, recommendedGridPanel);
+            }
+            recommendedGridPanel.revalidate();
+            recommendedGridPanel.repaint();
+        }
     }
 
     public void refreshHeartButtons() {
+        // Refresh hearts in both popular and recommended sections
         for (Map.Entry<JButton, Comic> entry : heartButtons.entrySet()) {
             setupHeartButton(entry.getKey(), entry.getValue());
         }
+        comicsGridPanel.revalidate();
+        comicsGridPanel.repaint();
+        updateRecommendations();
     }
 
     private void setupHeartButton(JButton likeButton, Comic comic) {
@@ -227,7 +313,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
     @Override
     public void onUserLogin(String email) {
-        refreshHeartButtons();
+        recommendedOffset = 0;
+        refreshHeartButtons(); // Refresh hearts in popular section
+        updateRecommendations();
     }
     
     private int getUserId(String email) {

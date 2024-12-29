@@ -87,21 +87,22 @@ public class Comic {
         return publisherName;
     }
 
-    // Add getters and setters
     public List<String> getGenres() {
         return genres;
     }
 
-    public void setGenres(List<String> genres) {
-        this.genres = genres != null ? genres : new ArrayList<>();
-    }
-
-    // Add helper method to get genres as string for storage
     public String getGenresAsString() {
         if (genres == null || genres.isEmpty()) {
             return "";
         }
-        return String.join(",", genres);
+        String result = String.join(",", genres);
+        System.out.println("Getting genres as string: " + result); // Debug
+        return result;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres != null ? genres : new ArrayList<>();
+        System.out.println("Genres set in Comic object: " + this.genres); // Debug
     }
 
     

@@ -13,8 +13,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
     private String currentUserEmail;
@@ -31,7 +29,6 @@ public class UiMain extends JFrame {
     private JButton profileButton;
     private JPanel searchProfilePanel;
     private LibraryPanel libraryPanel;
-
 
     public UiMain() {
         // Set FlatLaf theme
@@ -165,13 +162,13 @@ public class UiMain extends JFrame {
             public void mouseEntered(MouseEvent e) {
                 label.setText("<html><u>" + text + "</u></html>");
             }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 if ("Library".equals(text)) {
                     showLibraryPanel();
                 }
             }
-
 
             @Override
             public void mouseExited(MouseEvent e) {
@@ -245,13 +242,16 @@ public class UiMain extends JFrame {
     public String getCurrentUserEmail() {
         return currentUserEmail;
     }
+
     public void setCurrentUserEmail(String email) {
         this.currentUserEmail = email;
         notifyLoginListeners(email);
     }
+
     public interface UserLoginListener {
         void onUserLogin(String email);
     }
+
     public void addLoginListener(UserLoginListener listener) {
         loginListeners.add(listener);
     }
@@ -272,51 +272,75 @@ public class UiMain extends JFrame {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
         cardLayout.show(containerPanel, previousPanel);
     }
+
     public void displayHeroDetails(Hero hero, String sourcePanel) {
+
         HeroProfilePanel profilePanel = new HeroProfilePanel();
-    
+
+        JEditorPane descriptionPane = new JEditorPane();
+        descriptionPane.setContentType("text/html");
+        descriptionPane.setEditable(false);
+
         String description = hero.getDescription() != null
                 ? hero.getDescription()
                 : "<p style='color:gray;'>No description available.</p>";
-    
-        ImageIcon heroImage = null;
-        if (hero.getImageUrl() != null && !hero.getImageUrl().isEmpty()) {
-            try {
-                URL imageURL = new URL(hero.getImageUrl());
-                heroImage = new ImageIcon(imageURL);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    
+        descriptionPane.setText("<html><body style='font-family:sans-serif;'>" + description + "</body></html>");
+
+        JScrollPane scrollPane = new JScrollPane(descriptionPane);
+        scrollPane.setPreferredSize(new Dimension(450, 300));
+
+        ImageIcon heroImage = hero.getImageUrl() != null
+                ? new ImageIcon(hero.getImageUrl())
+                : new ImageIcon("https://via.placeholder.com/150");
+
         profilePanel.updateProfile(
                 hero.getName(),
-                description,
+                "Character Details",
                 heroImage,
                 hero.getTitles());
-    
+
         JDialog dialog = new JDialog(this, hero.getName(), true);
         dialog.setLayout(new BorderLayout());
-        dialog.add(profilePanel, BorderLayout.CENTER);
-        dialog.setSize(1000, 600); // Landscape size
+        dialog.add(profilePanel, BorderLayout.NORTH);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.setSize(500, 700);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+
+        JButton fullscreenButton = new JButton("Fullscreen");
+        fullscreenButton.addActionListener(e -> {
+            JDialog fullscreenDialog = new JDialog();
+            fullscreenDialog.setTitle("Full Image");
+            JLabel fullImageLabel = new JLabel(heroImage);
+            JScrollPane fullScrollPane = new JScrollPane(fullImageLabel);
+            fullscreenDialog.add(fullScrollPane);
+            fullscreenDialog.setSize(800, 600);
+            fullscreenDialog.setLocationRelativeTo(this);
+            fullscreenDialog.setVisible(true);
+        });
+
+        // Redimensionnement de l'image principale
+        Image scaledImage = heroImage.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel = new JLabel(scaledIcon);
+
     }
+
     public void refreshAllPanels() {
         // Refresh recommendation panel
         if (recommendationPanel != null) {
             recommendationPanel.refreshHeartButtons();
         }
-        
+
         // Refresh search results panel
         if (searchResultsPanel != null) {
             searchResultsPanel.refreshHeartButtons();
         }
-        
+
         // Refresh library panel
         if (libraryPanel != null) {
             libraryPanel.updateLibrary(currentUserEmail);
         }
     }
-    
+
 }
