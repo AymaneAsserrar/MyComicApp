@@ -11,6 +11,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,6 +26,8 @@ public class SearchResultsPanel extends JPanel {
     private String currentSearchText;
     private String currentSearchType;
     private JLabel searchResultsLabel;
+    private Map<JButton, Comic> starButtons = new HashMap<>();
+    private Map<JButton, Comic> validationButtons = new HashMap<>();
 
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
@@ -95,18 +99,36 @@ public class SearchResultsPanel extends JPanel {
                 new LineBorder(Color.LIGHT_GRAY, 1),
                 BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
-        // Heart-shaped button
+        // Create star button
+        JButton starButton = new JButton();
+        starButton.setFocusPainted(false);
+        starButton.setBorderPainted(false);
+        starButton.setContentAreaFilled(false);
+        starButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupStarButton(starButton, comic);
+
+        // Create heart button
         JButton likeButton = new JButton();
         likeButton.setFocusPainted(false);
         likeButton.setBorderPainted(false);
         likeButton.setContentAreaFilled(false);
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         setupHeartButton(likeButton, comic);
 
-        JPanel likeButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        likeButtonPanel.setOpaque(false);
-        likeButtonPanel.add(likeButton);
+        // Create star button
+        JButton validationButton = new JButton();
+        validationButton.setFocusPainted(false);
+        validationButton.setBorderPainted(false);
+        validationButton.setContentAreaFilled(false);
+        validationButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupValidationButton(validationButton, comic);
+
+        // Panel to hold both buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(validationButton);
+        buttonPanel.add(starButton);
+        buttonPanel.add(likeButton);
 
         JLabel coverLabel = new JLabel();
         coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -139,7 +161,7 @@ public class SearchResultsPanel extends JPanel {
 
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
-        comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
+        comicPanel.add(buttonPanel, BorderLayout.NORTH);
         resultsGridPanel.add(comicPanel);
     }
 
@@ -247,6 +269,103 @@ public class SearchResultsPanel extends JPanel {
         }
     }
 
+    private void setupStarButton(JButton starButton, Comic comic) {
+        starButtons.put(starButton, comic);
+        URL wStarURL = getClass().getClassLoader().getResource("wStar.png");
+        URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
+
+        if (wStarURL != null && yStarURL != null) {
+            ImageIcon wStarIcon = new ImageIcon(wStarURL);
+            ImageIcon yStarIcon = new ImageIcon(yStarURL);
+            Image wStarImage = wStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame.getCurrentUserEmail();
+
+            if (userEmail == null) {
+                starButton.setIcon(new ImageIcon(wStarImage));
+                starButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your wishlist"));
+            } else {
+                UserLibraryController controller = new UserLibraryController();
+                int userId = getUserId(userEmail);
+                boolean isComicInWishlist = controller.isComicInWishlist(userId, comic.getId());
+
+                starButton.setIcon(isComicInWishlist ? new ImageIcon(yStarImage) : new ImageIcon(wStarImage));
+
+                starButton.addActionListener(e -> {
+                    boolean currentState = controller.isComicInWishlist(userId, comic.getId());
+                    if (currentState) {
+                        if (controller.resetComicOwnership(userId, comic.getId())) {
+                            refreshValidationButtons();
+                            starButton.setIcon(new ImageIcon(wStarImage));
+                        }
+                    } else {
+                        if (!controller.isComicInLibrary(userId, comic.getId())) {
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Please add the comic to your library first before adding it to your wishlist",
+                                    "Not in Library",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            return;
+                        }
+                        if (controller.updateComicOwnership(userId, comic.getId(), 0)) {
+                            refreshValidationButtons();
+                            starButton.setIcon(new ImageIcon(yStarImage));
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private void setupValidationButton(JButton validaButton, Comic comic) {
+        validationButtons.put(validaButton, comic);
+        URL blackValidationURL = getClass().getClassLoader().getResource("notOwned.png");
+        URL greenValidationURL = getClass().getClassLoader().getResource("Owned.png");
+
+        if (blackValidationURL != null && greenValidationURL != null) {
+            ImageIcon blackValidationIcon = new ImageIcon(blackValidationURL);
+            ImageIcon greenValidationIcon = new ImageIcon(greenValidationURL);
+            Image blackValidationImage = blackValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image greenValidationImage = greenValidationIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame.getCurrentUserEmail();
+
+            if (userEmail == null) {
+                validaButton.setIcon(new ImageIcon(blackValidationImage));
+                validaButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your wishlist"));
+            } else {
+                UserLibraryController controller = new UserLibraryController();
+                int userId = getUserId(userEmail);
+                boolean isComicOwned = controller.isComicOwned(userId, comic.getId());
+                // Set initial icon based on wishlist status
+                validaButton.setIcon(
+                        isComicOwned ? new ImageIcon(greenValidationImage) : new ImageIcon(blackValidationImage));
+
+                // Add click handler
+                validaButton.addActionListener(e -> {
+                    boolean currentState = controller.isComicOwned(userId, comic.getId());
+                    if (currentState) {
+                        if (controller.resetComicOwnership(userId, comic.getId())) {
+                            refreshStarButtons();
+                            validaButton.setIcon(new ImageIcon(blackValidationImage));
+                        }
+                    } else {
+                        if (controller.updateComicOwnership(userId, comic.getId(), 1)) {
+                            refreshStarButtons();
+                            validaButton.setIcon(new ImageIcon(greenValidationImage));
+                        }
+                    }
+                });
+            }
+        }
+
+    }
+
     private int getUserId(String email) {
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
@@ -263,6 +382,28 @@ public class SearchResultsPanel extends JPanel {
 
     public void refreshHeartButtons() {
         // Reload current search results to refresh heart buttons
+        if (currentSearchText != null && currentSearchType != null) {
+            loadResults();
+        }
+    }
+
+    public void refreshValidationButtons() {
+        // Refresh all star buttons
+        for (Map.Entry<JButton, Comic> entry : validationButtons.entrySet()) {
+            setupValidationButton(entry.getKey(), entry.getValue());
+        }
+        // Also reload current search results
+        if (currentSearchText != null && currentSearchType != null) {
+            loadResults();
+        }
+    }
+
+    public void refreshStarButtons() {
+        // Refresh all star buttons
+        for (Map.Entry<JButton, Comic> entry : starButtons.entrySet()) {
+            setupStarButton(entry.getKey(), entry.getValue());
+        }
+        // Also reload current search results
         if (currentSearchText != null && currentSearchType != null) {
             loadResults();
         }
