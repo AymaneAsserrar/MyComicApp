@@ -42,17 +42,10 @@ public class UserLibraryController {
                     return updateStmt.executeUpdate() > 0;
                 }
             } else {
-                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
-                    insertStmt.setInt(1, userId);
-                    insertStmt.setInt(2, comic.getId());
-                    return insertStmt.executeUpdate() > 0;
-                }
+                insertStmt.setInt(1, userId);
+                insertStmt.setInt(2, comic.getId());
+                return insertStmt.executeUpdate() > 0;
             }
-
-            // Ajouter si n'existe pas
-            insertStmt.setInt(1, userId);
-            insertStmt.setInt(2, comic.getId());
-            return insertStmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error adding comic to library: " + e.getMessage());
             return false;

@@ -188,7 +188,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(buttonPanel, BorderLayout.NORTH);
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
-        comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
         
 
@@ -449,13 +448,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         });
     }
 
-    public void refreshHeartButtons() {
-        SwingUtilities.invokeLater(() -> {
-            for (Map.Entry<JButton, Comic> entry : heartButtons.entrySet()) {
-                setupHeartButton(entry.getKey(), entry.getValue());
-            }
-        });
-    }
+
 
     @Override
     public void onUserLogin(String email) {
@@ -508,4 +501,12 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendedGridPanel.repaint();
         refreshHeartButtons();
     }
+    public void updateWishlistMessage(boolean isSignedIn) {
+        if (isSignedIn) {
+            libraryMessageLabel.setText("This section will be implemented soon");
+        } else {
+            libraryMessageLabel.setText("You are not signed in yet");
+        }
+    }
+
 }
