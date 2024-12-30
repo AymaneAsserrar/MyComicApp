@@ -248,7 +248,7 @@ public class UiMain extends JFrame {
         searchProfilePanel.add(profileButton);
         searchProfilePanel.revalidate();
         searchProfilePanel.repaint();
-
+        recommendationPanel.onUserLogout();
         recommendationPanel.updateLibraryMessage(false);
         libraryPanel.updateLibrary(null);
 

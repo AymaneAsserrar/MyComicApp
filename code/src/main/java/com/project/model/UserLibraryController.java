@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import com.project.util.DatabaseUtil;
+import com.project.controller.SearchController;
+import com.project.model.Comic;
 
 public class UserLibraryController {
 
@@ -12,13 +14,24 @@ public class UserLibraryController {
      * Adds a comic to the user's library
      */
     public boolean addComicToLibrary(int userId, Comic comic) {
+        // Get full comic details to ensure genres are loaded
+        SearchController searchController = new SearchController();
+        Comic detailedComic = searchController.getComicDetails(comic.getId());
+        if (detailedComic != null) {
+            comic.setGenres(detailedComic.getGenres());
+        }
         ensureComicExists(comic);
         String checkQuery = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?";
         String insertQuery = "INSERT INTO biblio (id_biblio, id_comic, added) VALUES (?, ?, 1)";
         String updateQuery = "UPDATE biblio SET added = 1 WHERE id_biblio = ? AND id_comic = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+                PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?");
+                PreparedStatement insertStmt = conn.prepareStatement(
+                        "INSERT INTO biblio (id_biblio, id_comic, added) VALUES (?, ?, 1)")) {
+
+            // Vérifier si existe déjà
             checkStmt.setInt(1, userId);
             checkStmt.setInt(2, comic.getId());
             ResultSet rs = checkStmt.executeQuery();
@@ -35,6 +48,11 @@ public class UserLibraryController {
                     return insertStmt.executeUpdate() > 0;
                 }
             }
+
+            // Ajouter si n'existe pas
+            insertStmt.setInt(1, userId);
+            insertStmt.setInt(2, comic.getId());
+            return insertStmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error adding comic to library: " + e.getMessage());
             return false;
@@ -82,13 +100,17 @@ public class UserLibraryController {
             return false;
         }
     }
-    
+
     /**
      * Ensures the comic exists in the database
      */
     private void ensureComicExists(Comic comic) {
+        // Add debug logging
+        System.out.println("Ensuring comic exists with genres: " + comic.getGenresAsString());
+
         String checkQuery = "SELECT COUNT(*) FROM comic WHERE id_comic = ?";
-        String insertQuery = "INSERT INTO comic (id_comic, name, description, image) VALUES (?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO comic (id_comic, name, description, image, genres) VALUES (?, ?, ?, ?, ?)";
+        String updateQuery = "UPDATE comic SET genres = ? WHERE id_comic = ?";
 
         try (Connection conn = DatabaseUtil.getConnection()) {
             // Check if comic exists
@@ -96,7 +118,13 @@ public class UserLibraryController {
                 checkStmt.setInt(1, comic.getId());
                 ResultSet rs = checkStmt.executeQuery();
                 if (rs.next() && rs.getInt(1) > 0) {
-                    return; // Comic already exists
+                    // Comic exists - update genres
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+                        updateStmt.setString(1, comic.getGenresAsString());
+                        updateStmt.setInt(2, comic.getId());
+                        updateStmt.executeUpdate();
+                    }
+                    return;
                 }
             }
 
@@ -106,7 +134,9 @@ public class UserLibraryController {
                 insertStmt.setString(2, comic.getName());
                 insertStmt.setString(3, comic.getDescription());
                 insertStmt.setString(4, comic.getCoverImageUrl());
+                insertStmt.setString(5, comic.getGenresAsString());
                 insertStmt.executeUpdate();
+                System.out.println("Inserted comic with genres: " + comic.getGenresAsString());
             }
         } catch (SQLException e) {
             System.err.println("Error ensuring comic exists in database: " + e.getMessage());
