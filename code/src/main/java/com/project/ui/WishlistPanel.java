@@ -8,17 +8,22 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class WishlistPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private JPanel comicsGridPanel;
     private UserLibraryController libraryController;
     private JLabel messageLabel;
+    private Map<JButton, Comic> starButtons = new HashMap<>();
     private String currentUserEmail;
 
     public WishlistPanel() {
@@ -77,7 +82,7 @@ public class WishlistPanel extends JPanel {
         String query = "SELECT c.* FROM comic c " +
                 "JOIN biblio b ON c.id_comic = b.id_comic " +
                 "JOIN user u ON b.id_biblio = u.id " +
-                "WHERE u.email = ? AND b.possede = 0";
+                "WHERE u.email = ? AND (b.possede = 0 OR b.possede = 1)";
 
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -112,6 +117,78 @@ public class WishlistPanel extends JPanel {
         return -1;
     }
 
+    private void setupStarButton(JButton starButton, Comic comic) {
+        starButtons.put(starButton, comic);  // Track button-comic mapping
+        URL wStarURL = getClass().getClassLoader().getResource("wStar.png");
+        URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
+        URL ownedURL = getClass().getClassLoader().getResource("Owned.png");
+    
+        if (wStarURL != null && yStarURL != null && ownedURL != null) {
+            ImageIcon wStarIcon = new ImageIcon(wStarURL);
+            ImageIcon yStarIcon = new ImageIcon(yStarURL);
+            ImageIcon ownedIcon = new ImageIcon(ownedURL);
+            Image wStarImage = wStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image ownedImage = ownedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+    
+            if (currentUserEmail == null || currentUserEmail.isEmpty()) {
+                starButton.setIcon(new ImageIcon(wStarImage));
+                starButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to manage wishlist"));
+                return;
+            }
+    
+            int userId = getUserId(currentUserEmail);
+            UserLibraryController controller = new UserLibraryController();
+            
+            // Get initial state once
+            String currentStatus = controller.getComicStatus(userId, comic.getId());
+            
+            // Set initial icon
+            switch (currentStatus) {
+                case "owned":
+                    starButton.setIcon(new ImageIcon(ownedImage));
+                    break;
+                case "ystar":
+                    starButton.setIcon(new ImageIcon(yStarImage));
+                    break;
+                default:
+                    starButton.setIcon(new ImageIcon(wStarImage));
+            }
+    
+            // Simple click handler with minimal operations
+            starButton.addActionListener(e -> {
+                String status = controller.getComicStatus(userId, comic.getId());
+                boolean updated = false;
+                
+                switch (status) {
+                    case "owned":
+                        updated = controller.updateComicOwnership(userId, comic.getId(), null);
+                        if (updated) starButton.setIcon(new ImageIcon(wStarImage));
+                        break;
+                    case "ystar":
+                        updated = controller.updateComicOwnership(userId, comic.getId(), 1);
+                        if (updated) starButton.setIcon(new ImageIcon(ownedImage));
+                        break;
+                    default:
+                        updated = controller.updateComicOwnership(userId, comic.getId(), 0);
+                        if (updated) starButton.setIcon(new ImageIcon(yStarImage));
+                }
+                
+                if (updated) {
+                    UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(WishlistPanel.this);
+                    if (parentFrame != null) {
+                        parentFrame.refreshAllPanels();
+                    }
+                }
+            });
+        }
+    }
+    
+    public void refreshStarButtons() {
+        SwingUtilities.invokeLater(() -> {
+            starButtons.forEach(this::setupStarButton);
+        });
+    }
     private void addComicPanel(Comic comic) {
         JPanel comicPanel = new JPanel(new BorderLayout());
         comicPanel.setPreferredSize(new Dimension(200, 300));
@@ -122,37 +199,19 @@ public class WishlistPanel extends JPanel {
                 new LineBorder(Color.LIGHT_GRAY, 1),
                 BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
-        // Remove button
-        JButton removeButton = new JButton();
-        removeButton.setFocusPainted(false);
-        removeButton.setBorderPainted(false);
-        removeButton.setContentAreaFilled(false);
-        removeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Create star button
+        JButton starButton = new JButton();
+        starButton.setFocusPainted(false);
+        starButton.setBorderPainted(false);
+        starButton.setContentAreaFilled(false);
+        starButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupStarButton(starButton, comic);
+        starButtons.put(starButton, comic);
 
-        // Load heart icon
-        URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
-        if (yStarURL != null) {
-            ImageIcon yStarIcon = new ImageIcon(yStarURL);
-            Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            removeButton.setIcon(new ImageIcon(yStarImage));
-        }
-
+        // Panel to hold star button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
-        buttonPanel.add(removeButton);
-
-        // Add click handler for remove button
-        removeButton.addActionListener(e -> {
-            int userId = getUserId(currentUserEmail);
-            if (libraryController.resetComicOwnership(userId, comic.getId())) {
-                // Refresh library view
-                loadUserWishlist(currentUserEmail);
-
-                // Get main window and refresh other panels
-                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
-                parentFrame.refreshAllPanels();
-            }
-        });
+        buttonPanel.add(starButton);
 
         // Cover image with click handler
         JLabel coverLabel = new JLabel();

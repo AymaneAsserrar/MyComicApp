@@ -326,7 +326,6 @@ public class UiMain extends JFrame {
         if (recommendationPanel != null) {
             recommendationPanel.refreshHeartButtons();
             recommendationPanel.refreshStarButtons();
-            recommendationPanel.refreshValidationButton();
         }
 
         // Refresh search results panel
