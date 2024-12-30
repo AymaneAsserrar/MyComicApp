@@ -28,6 +28,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private static final int RECOMMENDATION_PAGE_SIZE = 12;
     private JLabel libraryMessageLabel;
     private Map<JButton, Comic> heartButtons;
+    private Map<JButton, Comic> starButtons;
+    private Map<JButton, Comic> validationButtons;
     private UiMain parentFrame;
     private JPanel recommendedGridPanel;
     private int recommendedOffset = 0;
@@ -35,7 +37,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
         this.heartButtons = new HashMap<>();
-        this.recommendationController = new RecommendationController();
+        this.starButtons = new HashMap<>();
+        this.validationButtons = new HashMap<>();
         parentFrame.addLoginListener(this);
 
         setLayout(new BorderLayout());
@@ -128,19 +131,29 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                 new LineBorder(Color.LIGHT_GRAY, 1),
                 BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
-        // Heart-shaped button
+        // Create star button
+        JButton starButton = new JButton();
+        starButton.setFocusPainted(false);
+        starButton.setBorderPainted(false);
+        starButton.setContentAreaFilled(false);
+        starButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupStarButton(starButton, comic);
+
+        // Create heart button
         JButton likeButton = new JButton();
         likeButton.setFocusPainted(false);
         likeButton.setBorderPainted(false);
         likeButton.setContentAreaFilled(false);
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         setupHeartButton(likeButton, comic);
 
-        JPanel likeButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        likeButtonPanel.setOpaque(false);
-        likeButtonPanel.add(likeButton);
+        // Panel to hold buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(starButton);
+        buttonPanel.add(likeButton);
 
+        // Cover image
         JLabel coverLabel = new JLabel();
         coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         try {
@@ -150,14 +163,15 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             coverLabel.setIcon(new ImageIcon(img));
         } catch (Exception e) {
             coverLabel.setText("Image unavailable");
-            coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         }
 
+        // Comic title
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        titleLabel.setForeground(Color.BLACK); // Set title color to black
+        titleLabel.setForeground(Color.BLACK);
         titleLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
 
+        // Add click listener to open comic details
         comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -170,6 +184,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             }
         });
 
+        // Add components to the comic panel
+        comicPanel.add(buttonPanel, BorderLayout.NORTH);
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicPanel.add(likeButtonPanel, BorderLayout.NORTH);
@@ -291,13 +307,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             Image whiteHeartImage = whiteHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image redHeartImage = redHeartIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
 
-            // Remove existing listeners to avoid duplicates
-            for (ActionListener listener : likeButton.getActionListeners()) {
+            String userEmail = parentFrame.getCurrentUserEmail();
+
+            // Remove existing action listeners safely
+            ActionListener[] listeners = likeButton.getActionListeners();
+            for (ActionListener listener : listeners) {
                 likeButton.removeActionListener(listener);
             }
 
-            // Always re-fetch the user email so it's correct after sign-up
-            String userEmail = parentFrame.getCurrentUserEmail();
             if (userEmail == null || userEmail.isEmpty()) {
                 likeButton.setIcon(new ImageIcon(whiteHeartImage));
                 likeButton.addActionListener(
@@ -308,10 +325,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
             boolean isInLibrary = controller.isComicInLibrary(userId, comic.getId());
+
+            // Set initial icon based on library status
             likeButton.setIcon(isInLibrary ? new ImageIcon(redHeartImage) : new ImageIcon(whiteHeartImage));
 
+            // Add click handler
             likeButton.addActionListener(e -> {
                 boolean currentState = controller.isComicInLibrary(userId, comic.getId());
+
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
@@ -326,11 +347,120 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         }
     }
 
+    private void setupStarButton(JButton starButton, Comic comic) {
+        starButtons.put(starButton, comic);
+        URL wStarURL = getClass().getClassLoader().getResource("wStar.png");
+        URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
+        URL ownedURL = getClass().getClassLoader().getResource("Owned.png");
+    
+        if (wStarURL != null && yStarURL != null && ownedURL != null) {
+            ImageIcon wStarIcon = new ImageIcon(wStarURL);
+            ImageIcon yStarIcon = new ImageIcon(yStarURL);
+            ImageIcon ownedIcon = new ImageIcon(ownedURL);
+            Image wStarImage = wStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image ownedImage = ownedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+    
+            String userEmail = parentFrame.getCurrentUserEmail();
+    
+            // Remove existing action listeners safely
+            ActionListener[] listeners = starButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                starButton.removeActionListener(listener);
+            }
+    
+            if (userEmail == null || userEmail.isEmpty()) {
+                starButton.setIcon(new ImageIcon(wStarImage));
+                starButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your wishlist"));
+                return;
+            }
+    
+            int userId = getUserId(userEmail);
+            UserLibraryController controller = new UserLibraryController();
+            String currentStatus = controller.getComicStatus(userId, comic.getId());
+    
+            // Set initial icon based on current status
+            switch (currentStatus) {
+                case "owned":
+                    starButton.setIcon(new ImageIcon(ownedImage));
+                    break;
+                case "ystar":
+                    starButton.setIcon(new ImageIcon(yStarImage));
+                    break;
+                default:
+                    starButton.setIcon(new ImageIcon(wStarImage));
+                    break;
+            }
+    
+            // Add click handler with single update
+            starButton.addActionListener(e -> {
+                String status = controller.getComicStatus(userId, comic.getId());
+                boolean updated = false;
+    
+                switch (status) {
+                    case "owned":
+                        updated = controller.updateComicOwnership(userId, comic.getId(), null);
+                        if (updated) {
+                            starButton.setIcon(new ImageIcon(wStarImage));
+                            SwingUtilities.invokeLater(() -> {
+                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                if (parentFrame != null) {
+                                    parentFrame.refreshAllPanels();
+                                }
+                            });
+                        }
+                        break;
+                    case "ystar": 
+                        updated = controller.updateComicOwnership(userId, comic.getId(), 1);
+                        if (updated) {
+                            starButton.setIcon(new ImageIcon(ownedImage));
+                            SwingUtilities.invokeLater(() -> {
+                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                if (parentFrame != null) {
+                                    parentFrame.refreshAllPanels();
+                                }
+                            });
+                        }
+                        break;
+                    case "wstar":
+                    default:
+                        updated = controller.updateComicOwnership(userId, comic.getId(), 0);
+                        if (updated) {
+                            starButton.setIcon(new ImageIcon(yStarImage));
+                            SwingUtilities.invokeLater(() -> {
+                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                if (parentFrame != null) {
+                                    parentFrame.refreshAllPanels();
+                                }
+                            });
+                        }
+                        break;
+                }
+            });
+        }
+    }
+    
+    public void refreshStarButtons() {
+        SwingUtilities.invokeLater(() -> {
+            for (Map.Entry<JButton, Comic> entry : starButtons.entrySet()) {
+                setupStarButton(entry.getKey(), entry.getValue());
+            }
+        });
+    }
+
+    public void refreshHeartButtons() {
+        SwingUtilities.invokeLater(() -> {
+            for (Map.Entry<JButton, Comic> entry : heartButtons.entrySet()) {
+                setupHeartButton(entry.getKey(), entry.getValue());
+            }
+        });
+    }
+
     @Override
     public void onUserLogin(String email) {
-        recommendedOffset = 0;
-        refreshHeartButtons(); // Refresh hearts in popular section
-        updateRecommendations();
+        refreshStarButtons();
+        refreshHeartButtons();
     }
 
     private int getUserId(String email) {
