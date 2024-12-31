@@ -52,47 +52,6 @@ public class UserLibraryController {
         }
     }
 
-    /**
-     * Updates the ownership status of a comic in the user's library
-     */
-    public boolean updateComicOwnership(int userId, int comicId, Integer possede) {
-        String checkQuery = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?";
-        String insertQuery = "INSERT INTO biblio (id_biblio, id_comic, possede) VALUES (?, ?, ?)";
-        String updateQuery = "UPDATE biblio SET possede = ? WHERE id_biblio = ? AND id_comic = ?";
-
-        try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
-            checkStmt.setInt(1, userId);
-            checkStmt.setInt(2, comicId);
-            ResultSet rs = checkStmt.executeQuery();
-            if (rs.next() && rs.getInt(1) > 0) {
-                try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
-                    if (possede == null) {
-                        updateStmt.setNull(1, java.sql.Types.INTEGER);
-                    } else {
-                        updateStmt.setInt(1, possede);
-                    }
-                    updateStmt.setInt(2, userId);
-                    updateStmt.setInt(3, comicId);
-                    return updateStmt.executeUpdate() > 0;
-                }
-            } else {
-                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
-                    insertStmt.setInt(1, userId);
-                    insertStmt.setInt(2, comicId);
-                    if (possede == null) {
-                        insertStmt.setNull(3, java.sql.Types.INTEGER);
-                    } else {
-                        insertStmt.setInt(3, possede);
-                    }
-                    return insertStmt.executeUpdate() > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error updating ownership: " + e.getMessage());
-            return false;
-        }
-    }
 
     /**
      * Ensures the comic exists in the database
@@ -239,18 +198,18 @@ public class UserLibraryController {
         String query = "SELECT added, possede FROM biblio WHERE id_biblio = ? AND id_comic = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
             pstmt.setInt(2, comicId);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 Integer possede = rs.getObject("possede") != null ? rs.getInt("possede") : null;
                 if (possede != null && possede == 1) {
-                    return "owned";  // Return icon path "owned.png"
+                    return "owned"; // Return icon path "owned.png"
                 } else if (possede != null && possede == 0) {
-                    return "ystar";  // In wishlist
+                    return "ystar"; // In wishlist
                 } else {
-                    return "wstar";  // Not in wishlist or library
+                    return "wstar"; // Not in wishlist or library
                 }
             }
             return "wstar"; // Default: not in library
@@ -259,5 +218,157 @@ public class UserLibraryController {
             System.err.println("Error checking comic status: " + e.getMessage());
             return "wstar";
         }
+    }
+
+    public boolean updateReadStatus(int userId, int comicId, Integer status) {
+        // First ensure comic exists
+        SearchController searchController = new SearchController();
+        Comic comic = searchController.getComicDetails(comicId);
+        if (comic != null) {
+            ensureComicExists(comic);
+        }
+
+        String checkQuery = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?";
+        String insertQuery = "INSERT INTO biblio (id_biblio, id_comic, status) VALUES (?, ?, ?)";
+        String updateQuery = "UPDATE biblio SET status = ? WHERE id_biblio = ? AND id_comic = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setInt(1, userId);
+            checkStmt.setInt(2, comicId);
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+                    if (status == null) {
+                        updateStmt.setNull(1, java.sql.Types.INTEGER);
+                    } else {
+                        updateStmt.setInt(1, status);
+                    }
+                    updateStmt.setInt(2, userId);
+                    updateStmt.setInt(3, comicId);
+                    return updateStmt.executeUpdate() > 0;
+                }
+            } else {
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, userId);
+                    insertStmt.setInt(2, comicId);
+                    if (status == null) {
+                        insertStmt.setNull(3, java.sql.Types.INTEGER);
+                    } else {
+                        insertStmt.setInt(3, status);
+                    }
+                    return insertStmt.executeUpdate() > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error updating read status: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateComicOwnership(int userId, int comicId, Integer possede) {
+        // First ensure comic exists
+        SearchController searchController = new SearchController();
+        Comic comic = searchController.getComicDetails(comicId);
+        if (comic != null) {
+            ensureComicExists(comic);
+        }
+
+        String checkQuery = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND id_comic = ?";
+        String insertQuery = "INSERT INTO biblio (id_biblio, id_comic, possede) VALUES (?, ?, ?)";
+        String updateQuery = "UPDATE biblio SET possede = ? WHERE id_biblio = ? AND id_comic = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setInt(1, userId);
+            checkStmt.setInt(2, comicId);
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+                    if (possede == null) {
+                        updateStmt.setNull(1, java.sql.Types.INTEGER);
+                    } else {
+                        updateStmt.setInt(1, possede);
+                    }
+                    updateStmt.setInt(2, userId);
+                    updateStmt.setInt(3, comicId);
+                    return updateStmt.executeUpdate() > 0;
+                }
+            } else {
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, userId);
+                    insertStmt.setInt(2, comicId);
+                    if (possede == null) {
+                        insertStmt.setNull(3, java.sql.Types.INTEGER);
+                    } else {
+                        insertStmt.setInt(3, possede);
+                    }
+                    return insertStmt.executeUpdate() > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error updating ownership: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Gets the read status for a comic
+     */
+    public String getReadStatus(int userId, int comicId) {
+        String query = "SELECT status FROM biblio WHERE id_biblio = ? AND id_comic = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, comicId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                Integer status = rs.getObject("status") != null ? rs.getInt("status") : null;
+                if (status != null) {
+                    switch (status) {
+                        case 0:
+                            return "reading"; // Currently reading
+                        case 1:
+                            return "finished"; // Finished
+                        default:
+                            return "notreading"; // Not reading
+                    }
+                }
+            }
+            return "notreading"; // Default: not reading
+
+        } catch (SQLException e) {
+            System.err.println("Error checking read status: " + e.getMessage());
+            return "notreading";
+        }
+    }
+
+    /**
+     * Checks if comic is in readlist (status is set)
+     */
+    public boolean isInReadlist(int userId, int comicId) {
+        String query = "SELECT status FROM biblio WHERE id_biblio = ? AND id_comic = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, comicId);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getObject("status") != null;
+        } catch (SQLException e) {
+            System.err.println("Error checking readlist status: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Reset read status
+     */
+    public boolean resetReadStatus(int userId, int comicId) {
+        return updateReadStatus(userId, comicId, null);
     }
 }

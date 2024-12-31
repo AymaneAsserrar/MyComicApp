@@ -18,31 +18,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WishlistPanel extends JPanel {
+public class ReadListPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private JPanel comicsGridPanel;
     private UserLibraryController libraryController;
     private JLabel messageLabel;
-    private Map<JButton, Comic> starButtons = new HashMap<>();
+    private Map<JButton, Comic> readButtons = new HashMap<>();
     private String currentUserEmail;
 
-    public WishlistPanel() {
+    public ReadListPanel() {
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // Initialize components
         libraryController = new UserLibraryController();
 
-        // Message label for login status
-        messageLabel = new JLabel("Please login to view your wishlist", SwingConstants.CENTER);
+        messageLabel = new JLabel("Please login to view your reading list", SwingConstants.CENTER);
         messageLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
-        // Comics grid setup
         comicsGridPanel = new JPanel(new GridLayout(0, 4, 15, 15));
         comicsGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         comicsGridPanel.setBackground(Color.WHITE);
 
-        // Scroll pane for comics
         JScrollPane scrollPane = new JScrollPane(comicsGridPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -51,21 +47,7 @@ public class WishlistPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    public void updateWishlist(String userEmail) {
-        this.currentUserEmail = userEmail;
-        if (userEmail == null || userEmail.isEmpty()) {
-            messageLabel.setText("Please login to view your wishlist");
-            comicsGridPanel.removeAll();
-            comicsGridPanel.revalidate();
-            comicsGridPanel.repaint();
-            return;
-        }
-
-        messageLabel.setText("My Wishlist");
-        loadUserWishlist(userEmail);
-    }
-
-    private void loadUserWishlist(String userEmail) {
+    private void loadUserReadlist(String userEmail) {
         comicsGridPanel.removeAll();
         List<Comic> userComics = getUserComics(userEmail);
 
@@ -82,7 +64,7 @@ public class WishlistPanel extends JPanel {
         String query = "SELECT DISTINCT c.* FROM comic c " +
                 "JOIN biblio b ON c.id_comic = b.id_comic " +
                 "JOIN user u ON b.id_biblio = u.id " +
-                "WHERE u.email = ? AND (b.possede = 0 OR b.possede = 1)";
+                "WHERE u.email = ? AND (b.status = 0 OR b.status = 1)";
 
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -117,79 +99,103 @@ public class WishlistPanel extends JPanel {
         return -1;
     }
 
-    private void setupStarButton(JButton starButton, Comic comic) {
-        starButtons.put(starButton, comic); // Track button-comic mapping
-        URL wStarURL = getClass().getClassLoader().getResource("wStar.png");
-        URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
-        URL ownedURL = getClass().getClassLoader().getResource("Owned.png");
+    private void setupReadButton(JButton readButton, Comic comic) {
+        readButtons.put(readButton, comic);
+        URL notReadingURL = getClass().getClassLoader().getResource("notreading.png");
+        URL readingURL = getClass().getClassLoader().getResource("currentlyreading.png");
+        URL finishedURL = getClass().getClassLoader().getResource("finished.png");
 
-        if (wStarURL != null && yStarURL != null && ownedURL != null) {
-            ImageIcon wStarIcon = new ImageIcon(wStarURL);
-            ImageIcon yStarIcon = new ImageIcon(yStarURL);
-            ImageIcon ownedIcon = new ImageIcon(ownedURL);
-            Image wStarImage = wStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            Image ownedImage = ownedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        if (notReadingURL != null && readingURL != null && finishedURL != null) {
+            ImageIcon notReadingIcon = new ImageIcon(notReadingURL);
+            ImageIcon readingIcon = new ImageIcon(readingURL);
+            ImageIcon finishedIcon = new ImageIcon(finishedURL);
 
-            if (currentUserEmail == null || currentUserEmail.isEmpty()) {
-                starButton.setIcon(new ImageIcon(wStarImage));
-                starButton
-                        .addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to manage wishlist"));
+            Image notReadingImage = notReadingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image readingImage = readingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image finishedImage = finishedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+
+            // Remove existing action listeners
+            ActionListener[] listeners = readButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                readButton.removeActionListener(listener);
+            }
+
+            // Get user email from parent frame
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame != null ? parentFrame.getCurrentUserEmail() : currentUserEmail;
+
+            if (userEmail == null || userEmail.isEmpty()) {
+                readButton.setIcon(new ImageIcon(notReadingImage));
+                readButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(this, "Please login to manage reading status"));
                 return;
             }
 
-            int userId = getUserId(currentUserEmail);
+            int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
+            String currentStatus = controller.getReadStatus(userId, comic.getId());
 
-            // Get initial state once
-            String currentStatus = controller.getComicStatus(userId, comic.getId());
-
-            // Set initial icon
             switch (currentStatus) {
-                case "owned":
-                    starButton.setIcon(new ImageIcon(ownedImage));
+                case "reading":
+                    readButton.setIcon(new ImageIcon(readingImage));
                     break;
-                case "ystar":
-                    starButton.setIcon(new ImageIcon(yStarImage));
+                case "finished":
+                    readButton.setIcon(new ImageIcon(finishedImage));
                     break;
                 default:
-                    starButton.setIcon(new ImageIcon(wStarImage));
+                    readButton.setIcon(new ImageIcon(notReadingImage));
             }
 
-            // Simple click handler with minimal operations
-            starButton.addActionListener(e -> {
-                String status = controller.getComicStatus(userId, comic.getId());
+            readButton.addActionListener(e -> {
+                String status = controller.getReadStatus(userId, comic.getId());
                 boolean updated = false;
 
                 switch (status) {
-                    case "owned":
-                        updated = controller.updateComicOwnership(userId, comic.getId(), null);
+                    case "notreading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 0);
                         if (updated)
-                            starButton.setIcon(new ImageIcon(wStarImage));
+                            readButton.setIcon(new ImageIcon(readingImage));
                         break;
-                    case "ystar":
-                        updated = controller.updateComicOwnership(userId, comic.getId(), 1);
+                    case "reading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 1);
                         if (updated)
-                            starButton.setIcon(new ImageIcon(ownedImage));
+                            readButton.setIcon(new ImageIcon(finishedImage));
                         break;
-                    default:
-                        updated = controller.updateComicOwnership(userId, comic.getId(), 0);
+                    case "finished":
+                        updated = controller.resetReadStatus(userId, comic.getId());
                         if (updated)
-                            starButton.setIcon(new ImageIcon(yStarImage));
+                            readButton.setIcon(new ImageIcon(notReadingImage));
+                        break;
                 }
 
                 if (updated) {
-                    loadUserWishlist(currentUserEmail); // Reload full list instead of just refreshing button
-
+                    loadUserReadlist(currentUserEmail); // Reload full list instead of just refreshing button
                 }
             });
         }
     }
 
-    public void refreshStarButtons() {
+    public void refreshReadButtons() {
         SwingUtilities.invokeLater(() -> {
-            starButtons.forEach(this::setupStarButton);
+            readButtons.forEach(this::setupReadButton);
         });
+    }
+
+    public void updateReadlist(String userEmail) {
+        System.out.println("Updating readlist for user: " + userEmail); // Debug log
+        this.currentUserEmail = userEmail;
+
+        if (userEmail == null || userEmail.isEmpty()) {
+            messageLabel.setText("Please login to view your reading list");
+            comicsGridPanel.removeAll();
+            comicsGridPanel.revalidate();
+            comicsGridPanel.repaint();
+            return;
+        }
+
+        messageLabel.setText("My Reading List");
+        loadUserReadlist(userEmail);
+        refreshReadButtons();
     }
 
     private void addComicPanel(Comic comic) {
@@ -197,26 +203,22 @@ public class WishlistPanel extends JPanel {
         comicPanel.setPreferredSize(new Dimension(200, 300));
         comicPanel.setBackground(Color.WHITE);
 
-        // Shadow effect
         comicPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(Color.LIGHT_GRAY, 1),
                 BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(0, 0, 0, 30))));
 
-        // Create star button
-        JButton starButton = new JButton();
-        starButton.setFocusPainted(false);
-        starButton.setBorderPainted(false);
-        starButton.setContentAreaFilled(false);
-        starButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setupStarButton(starButton, comic);
-        starButtons.put(starButton, comic);
+        JButton readButton = new JButton();
+        readButton.setFocusPainted(false);
+        readButton.setBorderPainted(false);
+        readButton.setContentAreaFilled(false);
+        readButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupReadButton(readButton, comic);
+        readButtons.put(readButton, comic);
 
-        // Panel to hold star button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
-        buttonPanel.add(starButton);
+        buttonPanel.add(readButton);
 
-        // Cover image with click handler
         JLabel coverLabel = new JLabel();
         coverLabel.setHorizontalAlignment(SwingConstants.CENTER);
         try {
@@ -228,17 +230,15 @@ public class WishlistPanel extends JPanel {
             coverLabel.setText("Image unavailable");
         }
 
-        // Make comic panel clickable for details
         comicPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(WishlistPanel.this);
-                parentFrame.displayComicDetails(comic, "Wishlist");
+                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(ReadListPanel.this);
+                parentFrame.displayComicDetails(comic, "ReadList");
             }
         });
 
-        // Title label
         JLabel titleLabel = new JLabel(comic.getName(), SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
         titleLabel.setBorder(new EmptyBorder(5, 0, 0, 0));

@@ -27,6 +27,7 @@ public class SearchResultsPanel extends JPanel {
     private String currentSearchType;
     private JLabel searchResultsLabel;
     private Map<JButton, Comic> starButtons = new HashMap<>();
+    private Map<JButton, Comic> readButtons = new HashMap<>();
 
     public SearchResultsPanel() {
         setLayout(new BorderLayout());
@@ -114,11 +115,21 @@ public class SearchResultsPanel extends JPanel {
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         setupHeartButton(likeButton, comic);
 
+        // Create read button
+        JButton readButton = new JButton();
+        readButton.setFocusPainted(false);
+        readButton.setBorderPainted(false);
+        readButton.setContentAreaFilled(false);
+        readButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupReadButton(readButton, comic);
+
+
         // Panel to hold buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
         buttonPanel.add(starButton);
         buttonPanel.add(likeButton);
+        buttonPanel.add(readButton);
 
         // Cover image
         JLabel coverLabel = new JLabel();
@@ -268,18 +279,14 @@ public class SearchResultsPanel extends JPanel {
                 }
                 
                 if (updated) {
-                    if (parentFrame != null) {
-                        parentFrame.refreshAllPanels();
-                    }
+                    refreshComicsGrid(); // Reload comics instead of just refreshing buttons
                 }
             });
         }
     }
     
     public void refreshStarButtons() {
-        SwingUtilities.invokeLater(() -> {
-            starButtons.forEach(this::setupStarButton);
-        });
+        refreshComicsGrid();
     }
 
     private void setupHeartButton(JButton heartButton, Comic comic) {
@@ -328,7 +335,86 @@ public class SearchResultsPanel extends JPanel {
             });
         }
     }
-
+    private void setupReadButton(JButton readButton, Comic comic) {
+        URL notReadingURL = getClass().getClassLoader().getResource("notreading.png");
+        URL readingURL = getClass().getClassLoader().getResource("currentlyreading.png");
+        URL finishedURL = getClass().getClassLoader().getResource("finished.png");
+    
+        if (notReadingURL != null && readingURL != null && finishedURL != null) {
+            ImageIcon notReadingIcon = new ImageIcon(notReadingURL);
+            ImageIcon readingIcon = new ImageIcon(readingURL);
+            ImageIcon finishedIcon = new ImageIcon(finishedURL);
+            
+            Image notReadingImage = notReadingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image readingImage = readingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image finishedImage = finishedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+    
+            UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(this);
+            String userEmail = parentFrame.getCurrentUserEmail();
+    
+            // Remove existing action listeners
+            ActionListener[] listeners = readButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                readButton.removeActionListener(listener);
+            }
+    
+            if (userEmail == null || userEmail.isEmpty()) {
+                readButton.setIcon(new ImageIcon(notReadingImage));
+                readButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to manage reading status"));
+                return;
+            }
+    
+            int userId = getUserId(userEmail);
+            UserLibraryController controller = new UserLibraryController();
+            String currentStatus = controller.getReadStatus(userId, comic.getId());
+    
+            // Set initial icon based on status
+            switch (currentStatus) {
+                case "reading":
+                    readButton.setIcon(new ImageIcon(readingImage));
+                    break;
+                case "finished":
+                    readButton.setIcon(new ImageIcon(finishedImage));
+                    break;
+                default:
+                    readButton.setIcon(new ImageIcon(notReadingImage));
+            }
+    
+            // Add click handler
+            readButton.addActionListener(e -> {
+                String status = controller.getReadStatus(userId, comic.getId());
+                boolean updated = false;
+    
+                switch (status) {
+                    case "notreading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 0); // Set to reading
+                        if (updated) {
+                            readButton.setIcon(new ImageIcon(readingImage));
+                        }
+                        break;
+                    case "reading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 1); // Set to finished
+                        if (updated) {
+                            readButton.setIcon(new ImageIcon(finishedImage));
+                        }
+                        break;
+                    case "finished":
+                        updated = controller.resetReadStatus(userId, comic.getId()); // Reset to not reading
+                        if (updated) {
+                            readButton.setIcon(new ImageIcon(notReadingImage));
+                        }
+                        break;
+                }
+    
+                if (updated) {
+                    refreshComicsGrid(); // Reload comics instead of just refreshing buttons
+                }
+            });
+        }
+    }
+    public void refreshReadButtons() {
+        refreshComicsGrid(); 
+    }
     private int getUserId(String email) {
         try (Connection conn = DatabaseUtil.getConnection();
                 PreparedStatement stmt = conn.prepareStatement("SELECT id FROM user WHERE email = ?")) {
@@ -344,10 +430,12 @@ public class SearchResultsPanel extends JPanel {
     }
 
     public void refreshHeartButtons() {
-        // Reload current search results to refresh heart buttons
-        if (currentSearchText != null && currentSearchType != null) {
-            loadResults();
-        }
+        refreshComicsGrid();
     }
-
+    // Add refresh method for comics grid
+    private void refreshComicsGrid() {
+        SwingUtilities.invokeLater(() -> {
+            loadResults(); // Reload all comics
+        });
+    }
 }
