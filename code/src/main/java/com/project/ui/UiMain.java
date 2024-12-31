@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.project.model.Comic;
 import com.project.model.Hero;
 import com.project.util.CustomSearchField;
+import com.project.ui.ReadListPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +31,7 @@ public class UiMain extends JFrame {
     private JPanel searchProfilePanel;
     private LibraryPanel libraryPanel;
     private WishlistPanel wishlistPanel;
+    private ReadListPanel readListPanel;
 
     public UiMain() {
         // Set FlatLaf theme
@@ -147,8 +149,10 @@ public class UiMain extends JFrame {
         containerPanel.add(comicDetailsPanel, "ComicDetails");
         libraryPanel = new LibraryPanel();
         wishlistPanel = new WishlistPanel();
+        readListPanel = new ReadListPanel();
         containerPanel.add(libraryPanel, "Library");
         containerPanel.add(wishlistPanel, "Wishlist");
+        containerPanel.add(readListPanel, "Readlist");
 
         add(containerPanel, BorderLayout.CENTER);
 
@@ -174,6 +178,9 @@ public class UiMain extends JFrame {
                 if ("Wishlist".equals(text)) {
                     showWishlistPanel();
                 }
+                if ("Readlist".equals(text)) {
+                    showReadListPanel();
+                }
             }
 
             @Override
@@ -192,6 +199,11 @@ public class UiMain extends JFrame {
     private void showWishlistPanel() {
         wishlistPanel.updateWishlist(currentUserEmail);
         cardLayout.show(containerPanel, "Wishlist");
+    }
+
+    private void showReadListPanel() {
+        readListPanel.updateReadlist(currentUserEmail);
+        cardLayout.show(containerPanel, "Readlist");
     }
 
     public void displaySearchResults(String searchText, String searchType) {
@@ -237,6 +249,9 @@ public class UiMain extends JFrame {
 
         recommendationPanel.updateWishlistMessage(true);
         wishlistPanel.updateWishlist(email);
+
+        readListPanel.updateReadlist(email);
+
     }
 
     private void logout() {
@@ -254,6 +269,9 @@ public class UiMain extends JFrame {
 
         recommendationPanel.updateWishlistMessage(false);
         wishlistPanel.updateWishlist(null);
+
+        readListPanel.updateReadlist(null);
+
     }
 
     public String getCurrentUserEmail() {
@@ -326,12 +344,16 @@ public class UiMain extends JFrame {
         if (recommendationPanel != null) {
             recommendationPanel.refreshHeartButtons();
             recommendationPanel.refreshStarButtons();
+            recommendationPanel.refreshReadButtons();
+
         }
 
         // Refresh search results panel
         if (searchResultsPanel != null) {
             searchResultsPanel.refreshHeartButtons();
             searchResultsPanel.refreshStarButtons();
+            searchResultsPanel.refreshReadButtons(); 
+
         }
 
         // Refresh library panel
@@ -342,6 +364,9 @@ public class UiMain extends JFrame {
         // Refresh wishlist panel
         if (wishlistPanel != null) {
             wishlistPanel.updateWishlist(currentUserEmail);
+        }
+        if (readListPanel != null) {
+            readListPanel.updateReadlist(currentUserEmail);
         }
     }
 

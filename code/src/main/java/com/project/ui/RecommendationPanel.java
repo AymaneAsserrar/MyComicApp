@@ -30,6 +30,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private Map<JButton, Comic> heartButtons;
     private Map<JButton, Comic> starButtons;
     private Map<JButton, Comic> validationButtons;
+    private Map<JButton, Comic> readButtons;
     private UiMain parentFrame;
     private JPanel recommendedGridPanel;
     private int recommendedOffset = 0;
@@ -39,6 +40,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         this.heartButtons = new HashMap<>();
         this.starButtons = new HashMap<>();
         this.validationButtons = new HashMap<>();
+        this.readButtons = new HashMap<>();
         parentFrame.addLoginListener(this);
 
         setLayout(new BorderLayout());
@@ -147,11 +149,20 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         likeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         setupHeartButton(likeButton, comic);
 
+        // Create read button
+        JButton readButton = new JButton();
+        readButton.setFocusPainted(false);
+        readButton.setBorderPainted(false);
+        readButton.setContentAreaFilled(false);
+        readButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setupReadButton(readButton, comic);
+
         // Panel to hold buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
         buttonPanel.add(starButton);
         buttonPanel.add(likeButton);
+        buttonPanel.add(readButton);
 
         // Cover image
         JLabel coverLabel = new JLabel();
@@ -189,7 +200,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
-        
 
     }
 
@@ -351,7 +361,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         URL wStarURL = getClass().getClassLoader().getResource("wStar.png");
         URL yStarURL = getClass().getClassLoader().getResource("yStar.png");
         URL ownedURL = getClass().getClassLoader().getResource("Owned.png");
-    
+
         if (wStarURL != null && yStarURL != null && ownedURL != null) {
             ImageIcon wStarIcon = new ImageIcon(wStarURL);
             ImageIcon yStarIcon = new ImageIcon(yStarURL);
@@ -359,26 +369,26 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             Image wStarImage = wStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image yStarImage = yStarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             Image ownedImage = ownedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-    
+
             String userEmail = parentFrame.getCurrentUserEmail();
-    
+
             // Remove existing action listeners safely
             ActionListener[] listeners = starButton.getActionListeners();
             for (ActionListener listener : listeners) {
                 starButton.removeActionListener(listener);
             }
-    
+
             if (userEmail == null || userEmail.isEmpty()) {
                 starButton.setIcon(new ImageIcon(wStarImage));
                 starButton.addActionListener(
                         e -> JOptionPane.showMessageDialog(this, "Please login to add comics to your wishlist"));
                 return;
             }
-    
+
             int userId = getUserId(userEmail);
             UserLibraryController controller = new UserLibraryController();
             String currentStatus = controller.getComicStatus(userId, comic.getId());
-    
+
             // Set initial icon based on current status
             switch (currentStatus) {
                 case "owned":
@@ -391,31 +401,33 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                     starButton.setIcon(new ImageIcon(wStarImage));
                     break;
             }
-    
+
             // Add click handler with single update
             starButton.addActionListener(e -> {
                 String status = controller.getComicStatus(userId, comic.getId());
                 boolean updated = false;
-    
+
                 switch (status) {
                     case "owned":
                         updated = controller.updateComicOwnership(userId, comic.getId(), null);
                         if (updated) {
                             starButton.setIcon(new ImageIcon(wStarImage));
                             SwingUtilities.invokeLater(() -> {
-                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                UiMain parentFrame = (UiMain) SwingUtilities
+                                        .getWindowAncestor(RecommendationPanel.this);
                                 if (parentFrame != null) {
                                     parentFrame.refreshAllPanels();
                                 }
                             });
                         }
                         break;
-                    case "ystar": 
+                    case "ystar":
                         updated = controller.updateComicOwnership(userId, comic.getId(), 1);
                         if (updated) {
                             starButton.setIcon(new ImageIcon(ownedImage));
                             SwingUtilities.invokeLater(() -> {
-                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                UiMain parentFrame = (UiMain) SwingUtilities
+                                        .getWindowAncestor(RecommendationPanel.this);
                                 if (parentFrame != null) {
                                     parentFrame.refreshAllPanels();
                                 }
@@ -428,7 +440,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         if (updated) {
                             starButton.setIcon(new ImageIcon(yStarImage));
                             SwingUtilities.invokeLater(() -> {
-                                UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                                UiMain parentFrame = (UiMain) SwingUtilities
+                                        .getWindowAncestor(RecommendationPanel.this);
                                 if (parentFrame != null) {
                                     parentFrame.refreshAllPanels();
                                 }
@@ -439,21 +452,98 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             });
         }
     }
-    
+
     public void refreshStarButtons() {
         SwingUtilities.invokeLater(() -> {
-            for (Map.Entry<JButton, Comic> entry : starButtons.entrySet()) {
-                setupStarButton(entry.getKey(), entry.getValue());
-            }
+            starButtons.forEach(this::setupStarButton);
         });
     }
 
-
+    private void setupReadButton(JButton readButton, Comic comic) {
+        readButtons.put(readButton, comic);  // Use readButtons map
+        URL notReadingURL = getClass().getClassLoader().getResource("notreading.png");
+        URL readingURL = getClass().getClassLoader().getResource("currentlyreading.png");
+        URL finishedURL = getClass().getClassLoader().getResource("finished.png");
+    
+        if (notReadingURL != null && readingURL != null && finishedURL != null) {
+            ImageIcon notReadingIcon = new ImageIcon(notReadingURL);
+            ImageIcon readingIcon = new ImageIcon(readingURL);
+            ImageIcon finishedIcon = new ImageIcon(finishedURL);
+    
+            Image notReadingImage = notReadingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image readingImage = readingIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image finishedImage = finishedIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+    
+            String userEmail = parentFrame.getCurrentUserEmail();
+    
+            // Remove existing action listeners
+            ActionListener[] listeners = readButton.getActionListeners();
+            for (ActionListener listener : listeners) {
+                readButton.removeActionListener(listener);
+            }
+    
+            if (userEmail == null || userEmail.isEmpty()) {
+                readButton.setIcon(new ImageIcon(notReadingImage));
+                readButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Please login to manage reading status"));
+                return;
+            }
+    
+            int userId = getUserId(userEmail);
+            UserLibraryController controller = new UserLibraryController();
+            String currentStatus = controller.getReadStatus(userId, comic.getId());
+    
+            switch (currentStatus) {
+                case "reading":
+                    readButton.setIcon(new ImageIcon(readingImage));
+                    break;
+                case "finished":
+                    readButton.setIcon(new ImageIcon(finishedImage));
+                    break;
+                default:
+                    readButton.setIcon(new ImageIcon(notReadingImage));
+            }
+    
+            readButton.addActionListener(e -> {
+                String status = controller.getReadStatus(userId, comic.getId());
+                boolean updated = false;
+    
+                switch (status) {
+                    case "notreading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 0);
+                        if (updated) readButton.setIcon(new ImageIcon(readingImage));
+                        break;
+                    case "reading":
+                        updated = controller.updateReadStatus(userId, comic.getId(), 1);
+                        if (updated) readButton.setIcon(new ImageIcon(finishedImage));
+                        break;
+                    case "finished":
+                        updated = controller.resetReadStatus(userId, comic.getId());
+                        if (updated) readButton.setIcon(new ImageIcon(notReadingImage));
+                        break;
+                }
+    
+                if (updated) {
+                    SwingUtilities.invokeLater(() -> {
+                        if (parentFrame != null) {
+                            parentFrame.refreshAllPanels();
+                        }
+                    });
+                }
+            });
+        }
+    }
+    
+    public void refreshReadButtons() {
+        SwingUtilities.invokeLater(() -> {
+            readButtons.forEach(this::setupReadButton);  // Use readButtons map
+        });
+    }
 
     @Override
     public void onUserLogin(String email) {
         refreshStarButtons();
         refreshHeartButtons();
+        refreshReadButtons(); 
     }
 
     private int getUserId(String email) {
@@ -499,14 +589,28 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         libraryMessageLabel.setText("You are not signed in yet");
         recommendedGridPanel.revalidate();
         recommendedGridPanel.repaint();
+        
+        // Reset all buttons
         refreshHeartButtons();
+        refreshStarButtons();
+        refreshReadButtons();
     }
+
     public void updateWishlistMessage(boolean isSignedIn) {
         if (isSignedIn) {
-            libraryMessageLabel.setText("This section will be implemented soon");
+            libraryMessageLabel.setText("Add a comic to your library to get recommendations");
         } else {
             libraryMessageLabel.setText("You are not signed in yet");
         }
+    }
+
+    private void refreshComicsGrid() {
+        SwingUtilities.invokeLater(() -> {
+            // Reload content
+            comicsGridPanel.removeAll();
+            loadPopularComics(0); // Reset offset and reload
+            updateRecommendations();
+        });
     }
 
 }
