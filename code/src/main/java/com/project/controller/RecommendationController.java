@@ -64,16 +64,32 @@ public class RecommendationController {
 
     public List<Comic> getComicsByGenres(String[] genres, int offset, int limit) {
         List<Comic> allComics = new ArrayList<>();
+        int remainingLimit = limit;
+
         for (String genre : genres) {
+            if (remainingLimit <= 0) {
+                break;
+            }
+
             try {
-                List<Comic> comics = api.searchComicsByGenres(genre, offset, limit);
+                List<Comic> comics = api.searchComicsByGenres(genre, offset, remainingLimit);
                 allComics.addAll(comics);
+                remainingLimit -= comics.size();
             } catch (IOException e) {
                 System.err.println("Error getting comics by genre: " + genre + " - " + e.getMessage());
                 e.printStackTrace();
             }
         }
+
         return allComics;
+    }
+
+    public Comic getComicDetailsFromIssue(int issueId) {
+        int volumeId = api.getVolumeIdFromIssue(issueId);
+        if (volumeId == -1) {
+            return null;
+        }
+        return getComicDetails(volumeId);
     }
 
     public List<Comic> getRecommendedComics(int userId, int offset, int limit) {

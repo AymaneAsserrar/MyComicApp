@@ -187,10 +187,20 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                Comic detailedComic = recommendationController.getComicDetails(comic.getId());
-                if (detailedComic != null) {
-                    UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
-                    parentFrame.displayComicDetails(detailedComic, "Recommendation");
+                if (targetPanel == recommendedGridPanel) {
+                    // Fetch issue details and then volume details for recommended comics
+                    Comic detailedComic = recommendationController.getComicDetailsFromIssue(comic.getId());
+                    if (detailedComic != null) {
+                        UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                        parentFrame.displayComicDetails(detailedComic, "Recommendation");
+                    }
+                } else {
+                    // Directly fetch volume details for popular comics
+                    Comic detailedComic = recommendationController.getComicDetails(comic.getId());
+                    if (detailedComic != null) {
+                        UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                        parentFrame.displayComicDetails(detailedComic, "Popular");
+                    }
                 }
             }
         });
@@ -200,7 +210,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
-
     }
 
     private void initializeRecommendationSection(JPanel mainScrollContent) {

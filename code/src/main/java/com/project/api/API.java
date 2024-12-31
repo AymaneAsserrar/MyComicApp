@@ -267,7 +267,7 @@ public class API {
 
 	public List<Comic> searchComicsByGenres(String genre, int offset, int limit) throws IOException {
 		// Step 1: Fetch Concepts (Genres)
-		List<Integer> conceptIds = fetchConceptIds(genre);
+		List<Integer> conceptIds = fetchConceptIds(genre, limit);
 		if (conceptIds.isEmpty()) {
 			System.out.println("No concepts found for genre: " + genre);
 			return new ArrayList<>();
@@ -278,9 +278,13 @@ public class API {
 		// Step 2: Fetch Issues by Concept ID
 		Set<Integer> issueIds = new HashSet<>();
 		for (Integer conceptId : conceptIds) {
+			if (issueIds.size() >= limit) {
+				break;
+			}
+
 			String fieldList = "id,name,description,issue_credits";
 			String endpoint = "concept/4015-" + conceptId + "/?api_key=" + API_KEY
-					+ "&format=json&field_list=" + fieldList;
+					+ "&format=json&field_list=" + fieldList + "&limit=" + limit;
 
 			String url = BASE_URL + endpoint;
 
@@ -312,6 +316,9 @@ public class API {
 			JsonArray issueCredits = conceptResults.getAsJsonArray("issue_credits");
 			if (issueCredits != null) {
 				for (JsonElement issue : issueCredits) {
+					if (issueIds.size() >= limit) {
+						break;
+					}
 					issueIds.add(issue.getAsJsonObject().get("id").getAsInt());
 				}
 			}
@@ -340,11 +347,8 @@ public class API {
 		return comics;
 	}
 
-	private String getIssueDetails(int issueId) throws IOException {
-		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
-				"date_added,date_last_updated,first_issue,last_issue," +
-				"publisher,start_year,character_credits,rating,concepts"; // Add concepts to fieldList
-
+	public String getIssueDetails(int issueId) {
+		String fieldList = "id,name,description,deck,image,volume,concepts";
 		String endpoint = "issue/4000-" + issueId + "/?api_key=" + API_KEY
 				+ "&format=json&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
@@ -365,14 +369,42 @@ public class API {
 		}
 	}
 
-	private List<Integer> fetchConceptIds(String genre) throws IOException {
+	public int getVolumeIdFromIssue(int issueId) {
+		String fieldList = "volume";
+		String endpoint = "issue/4000-" + issueId + "/?api_key=" + API_KEY
+				+ "&format=json&field_list=" + fieldList;
+		String url = BASE_URL + endpoint;
+
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				throw new IOException("Request error: HTTP Code " + response.code());
+			}
+			String jsonResponse = response.body() != null ? response.body().string() : null;
+			if (jsonResponse != null) {
+				JsonObject responseObj = new Gson().fromJson(jsonResponse, JsonObject.class);
+				JsonObject resultsObj = responseObj.getAsJsonObject("results");
+				JsonObject volumeObj = resultsObj.getAsJsonObject("volume");
+				return volumeObj.get("id").getAsInt();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+
+	private List<Integer> fetchConceptIds(String genre, int limit) throws IOException {
 		List<Integer> conceptIds = new ArrayList<>();
 		String[] genres = genre.split(",");
 
 		for (String g : genres) {
 			String url = BASE_URL + "concepts/?api_key=" + API_KEY +
 					"&format=json&field_list=id,name" +
-					"&filter=name:" + g.trim();
+					"&filter=name:" + g.trim() + "&limit=" + limit;
 
 			// Log the URL for debugging
 			System.out.println("Fetching concepts with URL: " + url);
@@ -384,14 +416,8 @@ public class API {
 					.build();
 
 			Response response = client.newCall(request).execute();
-
 			if (!response.isSuccessful()) {
-				if (response.code() == 403) {
-					throw new IOException(
-							"Error getting concepts: HTTP 403 - Forbidden. Please check your API key and permissions.");
-				} else {
-					throw new IOException("Error getting concepts: HTTP " + response.code());
-				}
+				throw new IOException("Error getting concepts: HTTP " + response.code());
 			}
 
 			String json = response.body().string();
