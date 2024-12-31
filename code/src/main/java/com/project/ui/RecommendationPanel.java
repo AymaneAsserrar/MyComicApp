@@ -235,8 +235,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
     private void updateRecommendations() {
         recommendedGridPanel.removeAll();
+        recommendedOffset = 0; // Reset offset when updating
         String userEmail = parentFrame.getCurrentUserEmail();
-
+    
         if (userEmail == null || userEmail.isEmpty()) {
             libraryMessageLabel.setText("You are not signed in yet");
             recommendedGridPanel.removeAll();
@@ -244,30 +245,50 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             recommendedGridPanel.repaint();
             return;
         }
-
+    
         int userId = getUserId(userEmail);
-        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0,
-                RECOMMENDATION_PAGE_SIZE);
-
-        if (recommendations.isEmpty()) {
-            libraryMessageLabel.setText("Please add a comic to your library to get recommendations");
+        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0, RECOMMENDATION_PAGE_SIZE);
+    
+        // Only show "add comic" message if user has no comics with genres in library
+        if (recommendations.isEmpty() && hasNoComicsWithGenres(userId)) {
+            libraryMessageLabel.setText("Add a comic to your library to get recommendations");
             return;
         }
-
-        libraryMessageLabel.setText("");
-
+    
+        libraryMessageLabel.setText(""); // Clear message if we have recommendations
+    
         for (Comic comic : recommendations) {
             addComicPanel(comic, recommendedGridPanel);
         }
-
+    
         // Add load more button if there are recommendations
         if (!recommendations.isEmpty()) {
             addLoadMoreButton(recommendedGridPanel, userId);
         }
-
+    
         recommendedGridPanel.revalidate();
         recommendedGridPanel.repaint();
     }
+    
+    private boolean hasNoComicsWithGenres(int userId) {
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            String genreQuery = "SELECT COUNT(*) FROM comic c " +
+                              "JOIN biblio ul ON c.id_comic = ul.id_comic " +
+                              "WHERE ul.id_biblio = ? AND added = 1 AND c.genres IS NOT NULL AND c.genres != ''";
+            
+            PreparedStatement stmt = conn.prepareStatement(genreQuery);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) == 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+    
 
     private void addLoadMoreButton(JPanel panel, int userId) {
         JButton loadMoreButton = new JButton("→");
@@ -345,10 +366,16 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
+                        // Reset and refresh recommendations
+                        recommendedOffset = 0;
+                        updateRecommendations();
                     }
                 } else {
                     if (controller.addComicToLibrary(userId, comic)) {
                         likeButton.setIcon(new ImageIcon(redHeartImage));
+                        // Reset and refresh recommendations
+                        recommendedOffset = 0;
+                        updateRecommendations();
                     }
                 }
                 parentFrame.refreshAllPanels(); // Force a UI refresh in RecommendationPanel
@@ -541,9 +568,19 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
     @Override
     public void onUserLogin(String email) {
+        // Reset offsets
+        currentOffset = 0;
+        recommendedOffset = 0;
+        
+        // Refresh all content
         refreshStarButtons();
         refreshHeartButtons();
-        refreshReadButtons(); 
+        refreshReadButtons();
+        
+        // Reload comics and recommendations
+        comicsGridPanel.removeAll();
+        loadPopularComics(0);
+        updateRecommendations();
     }
 
     private int getUserId(String email) {
@@ -584,16 +621,28 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
     // Add this to handle sign out
     public void onUserLogout() {
+        // Reset all offsets
+        currentOffset = 0;
         recommendedOffset = 0;
+        
+        // Clear panels
         recommendedGridPanel.removeAll();
+        comicsGridPanel.removeAll();
+        
+        // Update UI
         libraryMessageLabel.setText("You are not signed in yet");
         recommendedGridPanel.revalidate();
         recommendedGridPanel.repaint();
+        comicsGridPanel.revalidate();
+        comicsGridPanel.repaint();
         
-        // Reset all buttons
+        // Reset buttons
         refreshHeartButtons();
         refreshStarButtons();
         refreshReadButtons();
+        
+        // Reload popular comics
+        loadPopularComics(0);
     }
 
     public void updateWishlistMessage(boolean isSignedIn) {

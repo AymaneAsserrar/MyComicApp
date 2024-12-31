@@ -95,7 +95,7 @@ public class RecommendationController {
             // Get genres from user's library
             String genreQuery = "SELECT DISTINCT c.genres FROM comic c " +
                               "JOIN biblio ul ON c.id_comic = ul.id_comic " +
-                              "WHERE ul.id_biblio = ?";
+                              "WHERE ul.id_biblio = ? AND added = 1";
             
             PreparedStatement stmt = conn.prepareStatement(genreQuery);
             stmt.setInt(1, userId);
