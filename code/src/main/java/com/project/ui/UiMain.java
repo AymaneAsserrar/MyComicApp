@@ -191,6 +191,10 @@ public class UiMain extends JFrame {
         return label;
     }
 
+    public RecommendationPanel getRecommendationPanel() {
+        return recommendationPanel;
+    }
+
     private void showLibraryPanel() {
         libraryPanel.updateLibrary(currentUserEmail);
         cardLayout.show(containerPanel, "Library");
@@ -305,7 +309,9 @@ public class UiMain extends JFrame {
 
     public void showPreviousPanel() {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
-        cardLayout.show(containerPanel, previousPanel);
+        if (previousPanel != null) {
+            cardLayout.show(containerPanel, previousPanel);
+        }
     }
 
     public void displayHeroDetails(Hero hero, String sourcePanel) {
@@ -352,7 +358,7 @@ public class UiMain extends JFrame {
         if (searchResultsPanel != null) {
             searchResultsPanel.refreshHeartButtons();
             searchResultsPanel.refreshStarButtons();
-            searchResultsPanel.refreshReadButtons(); 
+            searchResultsPanel.refreshReadButtons();
 
         }
 

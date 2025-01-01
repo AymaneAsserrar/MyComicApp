@@ -49,9 +49,59 @@ public class SearchResultsPanel extends JPanel {
     }
 
     public void displayResults(String searchText, String searchType) {
-        currentSearchText = searchText;
-        currentSearchType = searchType;
-        loadResults();
+        LoadingDialog loadingDialog = new LoadingDialog(SwingUtilities.getWindowAncestor(this), "Searching...");
+        
+        SwingWorker<SearchController.SearchResult, Void> worker = new SwingWorker<>() {
+            @Override
+            protected SearchController.SearchResult doInBackground() {
+                if ("Comic".equals(searchType)) {
+                    return searchController.searchComicsByTitle(searchText, 0, 10);
+                } else if ("Character".equals(searchType)) {
+                    return searchController.searchCharactersByName(searchText);
+                }
+                return new SearchController.SearchResult(List.of(), 0);
+            }
+    
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    SearchController.SearchResult result = get();
+                    currentSearchText = searchText;
+                    currentSearchType = searchType;
+                    
+                    resultsGridPanel.removeAll();
+                    List<?> searchResults = result.getResults();
+    
+                    if (searchResults.isEmpty()) {
+                        searchResultsLabel.setText("No results found");
+                    } else {
+                        searchResultsLabel.setText(currentSearchType + "s Found");
+                        if ("Comic".equals(currentSearchType)) {
+                            for (Object comic : searchResults) {
+                                addComicPanel((Comic) comic);
+                            }
+                        } else if ("Character".equals(currentSearchType)) {
+                            for (Object hero : searchResults) {
+                                addHeroPanel((Hero) hero);
+                            }
+                        }
+                    }
+                    
+                    resultsGridPanel.revalidate();
+                    resultsGridPanel.repaint();
+                    revalidate();
+                    repaint();
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    searchResultsLabel.setText("Search failed. Please try again.");
+                }
+            }
+        };
+    
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private void loadResults() {

@@ -9,6 +9,8 @@ import com.project.model.Comic;
 import com.project.model.Hero;
 import com.project.util.DatabaseUtil;
 
+import kotlin.Pair;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -91,6 +93,52 @@ public class RecommendationController {
         }
         return getComicDetails(volumeId);
     }
+
+    public Pair<String, List<Comic>> getComicsFromSameVolume(int userId, int offset, int limit) {
+        List<Comic> comics = new ArrayList<>();
+        String selectedComicName = null;
+        try (Connection conn = DatabaseUtil.getConnection()) {
+            // Get random comic from user's library with status 0 or 1
+            String query = "SELECT c.id_comic, c.name FROM comic c " +
+                    "JOIN biblio b ON c.id_comic = b.id_comic " +
+                    "WHERE b.id_biblio = ? AND (b.status = 0 OR b.status = 1) " +
+                    "ORDER BY RANDOM() LIMIT 1";
+
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                int comicId = rs.getInt("id_comic");
+                selectedComicName = rs.getString("name");
+                System.out.println("Selected random comic ID: " + comicId); // Debug log
+
+                // Get issues from volume using new endpoint
+                String volumeResponse = api.getVolumeIssues(comicId, offset, limit);
+                if (volumeResponse != null) {
+                    System.out.println("Got volume issues response: " + volumeResponse); // Debug log
+                    Gson gson = new Gson();
+                    JsonObject volumeResponseObject = gson.fromJson(volumeResponse, JsonObject.class);
+                    JsonArray issuesArray = volumeResponseObject.getAsJsonArray("results");
+
+                    for (JsonElement element : issuesArray) {
+                        JsonObject issueJson = element.getAsJsonObject();
+                        Comic comic = api.parseComicDetails(issueJson);
+                        if (comic != null) {
+                            comics.add(comic);
+                        }
+                    }
+                } else {
+                    System.err.println("No issues found in volume response");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Exception in getComicsFromSameVolume: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return new Pair<>(selectedComicName, comics);
+    }
+
 
     public List<Comic> getRecommendedComics(int userId, int offset, int limit) {
         List<Comic> recommendations = new ArrayList<>();

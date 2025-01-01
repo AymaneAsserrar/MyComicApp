@@ -17,6 +17,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import com.project.util.DatabaseUtil;
+import com.project.ui.LoadingDialog;
+
+import kotlin.Pair;
+
 import com.project.model.UserLibraryController;
 
 public class RecommendationPanel extends JPanel implements UiMain.UserLoginListener {
@@ -34,6 +38,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private UiMain parentFrame;
     private JPanel recommendedGridPanel;
     private int recommendedOffset = 0;
+    private JPanel becauseYouReadPanel;
+    private JLabel becauseYouReadLabel;
 
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
@@ -103,6 +109,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         mainScrollContent.add(Box.createVerticalStrut(20)); // Spacing between sections
         initializeRecommendationSection(mainScrollContent);
 
+        // Initialize "Because You Read" section
+        initializeBecauseYouReadSection(mainScrollContent);
+
         // Add main scroll pane to panel
         add(mainScrollPane, BorderLayout.CENTER);
         add(libraryMessageLabel, BorderLayout.SOUTH);
@@ -113,14 +122,32 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         updateRecommendations();
     }
 
-    private void loadPopularComics(int offset) {
-        List<Comic> recommendationList = recommendationController.getPopularComics(offset, PAGE_SIZE);
-        for (Comic comic : recommendationList) {
-            addComicPanel(comic, comicsGridPanel);
-        }
-        currentOffset += recommendationList.size();
-        revalidate();
-        repaint();
+    public void loadPopularComics(int offset) {
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading comics...");
+        SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Comic> doInBackground() throws Exception {
+                return recommendationController.getPopularComics(offset, PAGE_SIZE);
+            }
+
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    List<Comic> comics = get();
+                    for (Comic comic : comics) {
+                        addComicPanel(comic, comicsGridPanel);
+                    }
+                    currentOffset += comics.size();
+                    revalidate();
+                    repaint();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private void addComicPanel(Comic comic, JPanel targetPanel) {
@@ -194,12 +221,19 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
                         parentFrame.displayComicDetails(detailedComic, "Recommendation");
                     }
+                } else if (targetPanel == becauseYouReadPanel) {
+                    // Fetch volume details for "Because You Read" comics
+                    Comic detailedComic = recommendationController.getComicDetailsFromIssue(comic.getId());
+                    if (detailedComic != null) {
+                        UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                        parentFrame.displayComicDetails(detailedComic, "Recommendation");
+                    }
                 } else {
                     // Directly fetch volume details for popular comics
                     Comic detailedComic = recommendationController.getComicDetails(comic.getId());
                     if (detailedComic != null) {
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
-                        parentFrame.displayComicDetails(detailedComic, "Popular");
+                        parentFrame.displayComicDetails(detailedComic, "Recommendation");
                     }
                 }
             }
@@ -210,6 +244,51 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
+    }
+
+    private void initializeBecauseYouReadSection(JPanel mainScrollContent) {
+        // Initialize "Because You Read" section
+        JPanel becauseYouReadSection = new JPanel(new BorderLayout());
+        becauseYouReadSection.setBackground(Color.WHITE);
+        becauseYouReadSection.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        becauseYouReadLabel = new JLabel("Because You Read", SwingConstants.CENTER);
+        becauseYouReadLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        becauseYouReadLabel.setForeground(Color.BLACK);
+        becauseYouReadLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setPreferredSize(new Dimension(100, 30));
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBackground(new Color(70, 130, 180));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
+        refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        refreshButton.addActionListener(e -> loadBecauseYouReadComics());
+
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.add(becauseYouReadLabel);
+        headerPanel.add(Box.createVerticalStrut(10)); // Add some space between the label and the button
+        headerPanel.add(refreshButton);
+        headerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        becauseYouReadLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        refreshButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        becauseYouReadPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
+        becauseYouReadPanel.setBackground(Color.WHITE);
+
+        JScrollPane becauseYouReadScrollPane = new JScrollPane(becauseYouReadPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        becauseYouReadScrollPane.getHorizontalScrollBar().setUnitIncrement(48);
+        becauseYouReadScrollPane.setPreferredSize(new Dimension(1000, 400));
+
+        becauseYouReadSection.add(headerPanel, BorderLayout.NORTH);
+        becauseYouReadSection.add(becauseYouReadScrollPane, BorderLayout.CENTER);
+
+        mainScrollContent.add(becauseYouReadSection);
     }
 
     private void initializeRecommendationSection(JPanel mainScrollContent) {
@@ -268,42 +347,90 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         mainScrollContent.add(recommendationsPanel);
     }
 
-    private void updateRecommendations() {
-        recommendedGridPanel.removeAll();
-        recommendedOffset = 0; // Reset offset when updating
-        String userEmail = parentFrame.getCurrentUserEmail();
+    private void loadBecauseYouReadComics() {
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading recommendations...");
+        SwingWorker<Pair<String, List<Comic>>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Pair<String, List<Comic>> doInBackground() throws Exception {
+                String userEmail = parentFrame.getCurrentUserEmail();
+                if (userEmail == null || userEmail.isEmpty()) {
+                    return null;
+                }
+                int userId = getUserId(userEmail);
+                return recommendationController.getComicsFromSameVolume(userId, 0, RECOMMENDATION_PAGE_SIZE);
+            }
 
-        if (userEmail == null || userEmail.isEmpty()) {
-            libraryMessageLabel.setText("You are not signed in yet");
-            recommendedGridPanel.removeAll();
-            recommendedGridPanel.revalidate();
-            recommendedGridPanel.repaint();
-            return;
-        }
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    Pair<String, List<Comic>> result = get();
+                    if (result != null) {
+                        String selectedComicName = result.component1();
+                        List<Comic> becauseYouReadComics = result.component2();
 
-        int userId = getUserId(userEmail);
-        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0,
-                RECOMMENDATION_PAGE_SIZE);
+                        becauseYouReadPanel.removeAll();
+                        if (selectedComicName != null) {
+                            becauseYouReadLabel.setText("Because You Read: " + selectedComicName);
+                        } else {
+                            becauseYouReadLabel.setText("Because You Read");
+                        }
 
-        // Only show "add comic" message if user has no comics with genres in library
-        if (recommendations.isEmpty() && hasNoComicsWithGenres(userId)) {
-            libraryMessageLabel.setText("Add a comic to your library to get recommendations");
-            return;
-        }
+                        for (Comic comic : becauseYouReadComics) {
+                            addComicPanel(comic, becauseYouReadPanel);
+                        }
 
-        libraryMessageLabel.setText(""); // Clear message if we have recommendations
+                        becauseYouReadPanel.revalidate();
+                        becauseYouReadPanel.repaint();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
+    }
 
-        for (Comic comic : recommendations) {
-            addComicPanel(comic, recommendedGridPanel);
-        }
+    public void updateRecommendations() {
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading recommendations...");
+        SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Comic> doInBackground() throws Exception {
+                String userEmail = parentFrame.getCurrentUserEmail();
+                if (userEmail == null || userEmail.isEmpty()) {
+                    return null;
+                }
+                int userId = getUserId(userEmail);
+                return recommendationController.getRecommendedComics(userId, 0, RECOMMENDATION_PAGE_SIZE);
+            }
 
-        // Add load more button if there are recommendations
-        if (!recommendations.isEmpty()) {
-            addLoadMoreButton(recommendedGridPanel, userId);
-        }
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    List<Comic> recommendations = get();
+                    recommendedGridPanel.removeAll();
+                    recommendedOffset = 0; // Reset offset when updating
 
-        recommendedGridPanel.revalidate();
-        recommendedGridPanel.repaint();
+                    if (recommendations != null && !recommendations.isEmpty()) {
+                        for (Comic comic : recommendations) {
+                            addComicPanel(comic, recommendedGridPanel);
+                        }
+                        addLoadMoreButton(recommendedGridPanel, getUserId(parentFrame.getCurrentUserEmail()));
+                    } else {
+                        libraryMessageLabel.setText("Add a comic to your library to get recommendations");
+                    }
+
+                    recommendedGridPanel.revalidate();
+                    recommendedGridPanel.repaint();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private boolean hasNoComicsWithGenres(int userId) {
@@ -672,6 +799,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicsGridPanel.revalidate();
         comicsGridPanel.repaint();
 
+        becauseYouReadPanel.removeAll();
+        becauseYouReadPanel.revalidate();
+        becauseYouReadPanel.repaint();
         // Reset buttons
         refreshHeartButtons();
         refreshStarButtons();
