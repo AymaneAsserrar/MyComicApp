@@ -191,6 +191,10 @@ public class UiMain extends JFrame {
         return label;
     }
 
+    public RecommendationPanel getRecommendationPanel() {
+        return recommendationPanel;
+    }
+
     private void showLibraryPanel() {
         libraryPanel.updateLibrary(currentUserEmail);
         cardLayout.show(containerPanel, "Library");
@@ -354,7 +358,7 @@ public class UiMain extends JFrame {
         if (searchResultsPanel != null) {
             searchResultsPanel.refreshHeartButtons();
             searchResultsPanel.refreshStarButtons();
-            searchResultsPanel.refreshReadButtons(); 
+            searchResultsPanel.refreshReadButtons();
 
         }
 

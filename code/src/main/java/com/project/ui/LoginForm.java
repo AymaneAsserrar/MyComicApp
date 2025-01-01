@@ -15,7 +15,8 @@ public class LoginForm extends JDialog {
     private JPasswordField passwordField;
     private JLabel errorLabel;
     private JLabel loggedInLabel;
-    private JButton logoutButton; 
+    private JButton logoutButton;
+
     public LoginForm(JFrame parent) {
         super(parent, "Login", true);
         setSize(400, 400);
@@ -67,7 +68,7 @@ public class LoginForm extends JDialog {
         });
         panel.add(loginButton, gbc);
 
-     // Forgot Password Button
+        // Forgot Password Button
         gbc.gridy = 4;
         JButton forgotPasswordButton = new JButton("Forgot Password?");
         forgotPasswordButton.setForeground(Color.GRAY);
@@ -79,7 +80,6 @@ public class LoginForm extends JDialog {
             resetPasswordPanel.setVisible(true); // Open the dialog
         });
         panel.add(forgotPasswordButton, gbc);
-
 
         // Sign Up Button
         gbc.gridy = 5;
@@ -97,9 +97,9 @@ public class LoginForm extends JDialog {
 
         add(panel);
         addFieldListeners();
-        //Logout button
+        // Logout button
         gbc.gridy = 6; // Adjust the grid position
-        loggedInLabel = new JLabel(); 
+        loggedInLabel = new JLabel();
         loggedInLabel.setVisible(false); // Initially hidden
         panel.add(loggedInLabel, gbc);
         gbc.gridy = 7; // Adjust the grid position
@@ -108,7 +108,7 @@ public class LoginForm extends JDialog {
         logoutButton.setBackground(Color.RED);
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-       
+
     }
 
     private void addFieldListeners() {
@@ -156,7 +156,7 @@ public class LoginForm extends JDialog {
             showError("Password cannot be empty");
             return;
         }
-        
+
         // Get the result from UserAuthController
         String validationMessage = UserAuthController.validateCredentials(email, password);
 
@@ -165,22 +165,36 @@ public class LoginForm extends JDialog {
             ((UiMain) parent).setCurrentUserEmail(email);
             ((UiMain) parent).updateProfile(email);
             dispose();
+
+            // Fetch recommendations in the background
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    ((UiMain) parent).getRecommendationPanel().updateRecommendations();
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Optionally, you can add any UI updates here after fetching recommendations
+                }
+            };
+            worker.execute();
         } else {
             // Display the specific error message from the controller
             showError(validationMessage);
         }
     }
 
-
     private boolean isValidEmail(String email) {
         String emailRegex = "^[\\w-\\.]+@[\\w-\\.]+\\.\\w{2,4}$";
         return Pattern.matches(emailRegex, email);
     }
-    
+
     private boolean isValidPassword(String password) {
         return password != null && !password.isEmpty();
     }
-    
+
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);

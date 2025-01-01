@@ -17,6 +17,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import com.project.util.DatabaseUtil;
+import com.project.ui.LoadingDialog;
 
 import kotlin.Pair;
 
@@ -121,14 +122,32 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         updateRecommendations();
     }
 
-    private void loadPopularComics(int offset) {
-        List<Comic> recommendationList = recommendationController.getPopularComics(offset, PAGE_SIZE);
-        for (Comic comic : recommendationList) {
-            addComicPanel(comic, comicsGridPanel);
-        }
-        currentOffset += recommendationList.size();
-        revalidate();
-        repaint();
+    public void loadPopularComics(int offset) {
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading comics...");
+        SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Comic> doInBackground() throws Exception {
+                return recommendationController.getPopularComics(offset, PAGE_SIZE);
+            }
+
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    List<Comic> comics = get();
+                    for (Comic comic : comics) {
+                        addComicPanel(comic, comicsGridPanel);
+                    }
+                    currentOffset += comics.size();
+                    revalidate();
+                    repaint();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private void addComicPanel(Comic comic, JPanel targetPanel) {
@@ -329,71 +348,89 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     private void loadBecauseYouReadComics() {
-        becauseYouReadPanel.removeAll();
-        String userEmail = parentFrame.getCurrentUserEmail();
-        if (userEmail == null || userEmail.isEmpty()) {
-            becauseYouReadLabel.setText("Because You Read");
-            becauseYouReadPanel.revalidate();
-            becauseYouReadPanel.repaint();
-            return;
-        }
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading recommendations...");
+        SwingWorker<Pair<String, List<Comic>>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Pair<String, List<Comic>> doInBackground() throws Exception {
+                String userEmail = parentFrame.getCurrentUserEmail();
+                if (userEmail == null || userEmail.isEmpty()) {
+                    return null;
+                }
+                int userId = getUserId(userEmail);
+                return recommendationController.getComicsFromSameVolume(userId, 0, RECOMMENDATION_PAGE_SIZE);
+            }
 
-        int userId = getUserId(userEmail);
-        Pair<String, List<Comic>> result = recommendationController.getComicsFromSameVolume(userId, 0,
-                RECOMMENDATION_PAGE_SIZE);
-        String selectedComicName = result.component1();
-        List<Comic> becauseYouReadComics = result.component2();
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    Pair<String, List<Comic>> result = get();
+                    if (result != null) {
+                        String selectedComicName = result.component1();
+                        List<Comic> becauseYouReadComics = result.component2();
 
-        if (selectedComicName != null) {
-            becauseYouReadLabel.setText("Because You Read: " + selectedComicName);
-        } else {
-            becauseYouReadLabel.setText("Because You Read");
-        }
+                        becauseYouReadPanel.removeAll();
+                        if (selectedComicName != null) {
+                            becauseYouReadLabel.setText("Because You Read: " + selectedComicName);
+                        } else {
+                            becauseYouReadLabel.setText("Because You Read");
+                        }
 
-        for (Comic comic : becauseYouReadComics) {
-            addComicPanel(comic, becauseYouReadPanel);
-        }
+                        for (Comic comic : becauseYouReadComics) {
+                            addComicPanel(comic, becauseYouReadPanel);
+                        }
 
-        becauseYouReadPanel.revalidate();
-        becauseYouReadPanel.repaint();
+                        becauseYouReadPanel.revalidate();
+                        becauseYouReadPanel.repaint();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
-    private void updateRecommendations() {
-        recommendedGridPanel.removeAll();
-        recommendedOffset = 0; // Reset offset when updating
-        String userEmail = parentFrame.getCurrentUserEmail();
+    public void updateRecommendations() {
+        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading recommendations...");
+        SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<Comic> doInBackground() throws Exception {
+                String userEmail = parentFrame.getCurrentUserEmail();
+                if (userEmail == null || userEmail.isEmpty()) {
+                    return null;
+                }
+                int userId = getUserId(userEmail);
+                return recommendationController.getRecommendedComics(userId, 0, RECOMMENDATION_PAGE_SIZE);
+            }
 
-        if (userEmail == null || userEmail.isEmpty()) {
-            libraryMessageLabel.setText("You are not signed in yet");
-            recommendedGridPanel.removeAll();
-            recommendedGridPanel.revalidate();
-            recommendedGridPanel.repaint();
-            return;
-        }
+            @Override
+            protected void done() {
+                loadingDialog.dispose();
+                try {
+                    List<Comic> recommendations = get();
+                    recommendedGridPanel.removeAll();
+                    recommendedOffset = 0; // Reset offset when updating
 
-        int userId = getUserId(userEmail);
-        List<Comic> recommendations = recommendationController.getRecommendedComics(userId, 0,
-                RECOMMENDATION_PAGE_SIZE);
+                    if (recommendations != null && !recommendations.isEmpty()) {
+                        for (Comic comic : recommendations) {
+                            addComicPanel(comic, recommendedGridPanel);
+                        }
+                        addLoadMoreButton(recommendedGridPanel, getUserId(parentFrame.getCurrentUserEmail()));
+                    } else {
+                        libraryMessageLabel.setText("Add a comic to your library to get recommendations");
+                    }
 
-        // Only show "add comic" message if user has no comics with genres in library
-        if (recommendations.isEmpty() && hasNoComicsWithGenres(userId)) {
-            libraryMessageLabel.setText("Add a comic to your library to get recommendations");
-            return;
-        }
-
-        libraryMessageLabel.setText(""); // Clear message if we have recommendations
-
-        for (Comic comic : recommendations) {
-            addComicPanel(comic, recommendedGridPanel);
-        }
-
-        // Add load more button if there are recommendations
-        if (!recommendations.isEmpty()) {
-            addLoadMoreButton(recommendedGridPanel, userId);
-        }
-
-        recommendedGridPanel.revalidate();
-        recommendedGridPanel.repaint();
+                    recommendedGridPanel.revalidate();
+                    recommendedGridPanel.repaint();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+        loadingDialog.setVisible(true);
     }
 
     private boolean hasNoComicsWithGenres(int userId) {

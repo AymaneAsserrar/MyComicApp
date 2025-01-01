@@ -30,25 +30,33 @@ public class API {
 	}
 
 	public String getPopularComics(int offset, int limit) {
+		String cacheKey = "popularComics_" + offset + "_" + limit;
+		String cachedResponse = APICache.get(cacheKey);
+		if (cachedResponse != null) {
+			return cachedResponse;
+		}
+	
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 				"date_added,date_last_updated,first_issue,last_issue," +
 				"publisher,start_year,character_credits,rating";
-
+	
 		String endpoint = "volumes/?api_key=" + API_KEY
 				+ "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit
 				+ "&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
-
+	
 		Request request = new Request.Builder()
 				.url(url)
 				.header("User-Agent", "ComicApp/1.0")
 				.build();
-
+	
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
-			return response.body() != null ? response.body().string() : null;
+			String responseBody = response.body().string();
+			APICache.put(cacheKey, responseBody);
+			return responseBody;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
