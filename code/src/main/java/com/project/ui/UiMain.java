@@ -305,7 +305,9 @@ public class UiMain extends JFrame {
 
     public void showPreviousPanel() {
         String previousPanel = comicDetailsPanel.getPreviousPanel();
-        cardLayout.show(containerPanel, previousPanel);
+        if (previousPanel != null) {
+            cardLayout.show(containerPanel, previousPanel);
+        }
     }
 
     public void displayHeroDetails(Hero hero, String sourcePanel) {

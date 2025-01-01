@@ -17,6 +17,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import com.project.util.DatabaseUtil;
+
+import kotlin.Pair;
+
 import com.project.model.UserLibraryController;
 
 public class RecommendationPanel extends JPanel implements UiMain.UserLoginListener {
@@ -34,6 +37,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private UiMain parentFrame;
     private JPanel recommendedGridPanel;
     private int recommendedOffset = 0;
+    private JPanel becauseYouReadPanel;
+    private JLabel becauseYouReadLabel;
 
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
@@ -102,6 +107,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         mainScrollContent.add(popularPanel);
         mainScrollContent.add(Box.createVerticalStrut(20)); // Spacing between sections
         initializeRecommendationSection(mainScrollContent);
+
+        // Initialize "Because You Read" section
+        initializeBecauseYouReadSection(mainScrollContent);
 
         // Add main scroll pane to panel
         add(mainScrollPane, BorderLayout.CENTER);
@@ -194,12 +202,19 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
                         parentFrame.displayComicDetails(detailedComic, "Recommendation");
                     }
+                } else if (targetPanel == becauseYouReadPanel) {
+                    // Fetch volume details for "Because You Read" comics
+                    Comic detailedComic = recommendationController.getComicDetailsFromIssue(comic.getId());
+                    if (detailedComic != null) {
+                        UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
+                        parentFrame.displayComicDetails(detailedComic, "Recommendation");
+                    }
                 } else {
                     // Directly fetch volume details for popular comics
                     Comic detailedComic = recommendationController.getComicDetails(comic.getId());
                     if (detailedComic != null) {
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
-                        parentFrame.displayComicDetails(detailedComic, "Popular");
+                        parentFrame.displayComicDetails(detailedComic, "Recommendation");
                     }
                 }
             }
@@ -210,6 +225,51 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         targetPanel.add(comicPanel, targetPanel.getComponentCount() - 1);
+    }
+
+    private void initializeBecauseYouReadSection(JPanel mainScrollContent) {
+        // Initialize "Because You Read" section
+        JPanel becauseYouReadSection = new JPanel(new BorderLayout());
+        becauseYouReadSection.setBackground(Color.WHITE);
+        becauseYouReadSection.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        becauseYouReadLabel = new JLabel("Because You Read", SwingConstants.CENTER);
+        becauseYouReadLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        becauseYouReadLabel.setForeground(Color.BLACK);
+        becauseYouReadLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setPreferredSize(new Dimension(100, 30));
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBackground(new Color(70, 130, 180));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
+        refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        refreshButton.addActionListener(e -> loadBecauseYouReadComics());
+
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.add(becauseYouReadLabel);
+        headerPanel.add(Box.createVerticalStrut(10)); // Add some space between the label and the button
+        headerPanel.add(refreshButton);
+        headerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        becauseYouReadLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        refreshButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        becauseYouReadPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
+        becauseYouReadPanel.setBackground(Color.WHITE);
+
+        JScrollPane becauseYouReadScrollPane = new JScrollPane(becauseYouReadPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        becauseYouReadScrollPane.getHorizontalScrollBar().setUnitIncrement(48);
+        becauseYouReadScrollPane.setPreferredSize(new Dimension(1000, 400));
+
+        becauseYouReadSection.add(headerPanel, BorderLayout.NORTH);
+        becauseYouReadSection.add(becauseYouReadScrollPane, BorderLayout.CENTER);
+
+        mainScrollContent.add(becauseYouReadSection);
     }
 
     private void initializeRecommendationSection(JPanel mainScrollContent) {
@@ -266,6 +326,36 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
         mainScrollContent.add(Box.createVerticalStrut(20));
         mainScrollContent.add(recommendationsPanel);
+    }
+
+    private void loadBecauseYouReadComics() {
+        becauseYouReadPanel.removeAll();
+        String userEmail = parentFrame.getCurrentUserEmail();
+        if (userEmail == null || userEmail.isEmpty()) {
+            becauseYouReadLabel.setText("Because You Read");
+            becauseYouReadPanel.revalidate();
+            becauseYouReadPanel.repaint();
+            return;
+        }
+
+        int userId = getUserId(userEmail);
+        Pair<String, List<Comic>> result = recommendationController.getComicsFromSameVolume(userId, 0,
+                RECOMMENDATION_PAGE_SIZE);
+        String selectedComicName = result.component1();
+        List<Comic> becauseYouReadComics = result.component2();
+
+        if (selectedComicName != null) {
+            becauseYouReadLabel.setText("Because You Read: " + selectedComicName);
+        } else {
+            becauseYouReadLabel.setText("Because You Read");
+        }
+
+        for (Comic comic : becauseYouReadComics) {
+            addComicPanel(comic, becauseYouReadPanel);
+        }
+
+        becauseYouReadPanel.revalidate();
+        becauseYouReadPanel.repaint();
     }
 
     private void updateRecommendations() {
@@ -672,6 +762,9 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicsGridPanel.revalidate();
         comicsGridPanel.repaint();
 
+        becauseYouReadPanel.removeAll();
+        becauseYouReadPanel.revalidate();
+        becauseYouReadPanel.repaint();
         // Reset buttons
         refreshHeartButtons();
         refreshStarButtons();

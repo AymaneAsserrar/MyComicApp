@@ -434,4 +434,37 @@ public class API {
 
 		return conceptIds;
 	}
+
+	public String getVolumeIssues(int comicId, int offset, int limit) {
+		try {
+			// Construct the correct URL with BASE_URL
+			String endpoint = String.format("issues/?api_key=" + API_KEY +
+					"&filter=volume:" + comicId
+					+ "&format=json&offset=%d&limit=%d&field_list=id,name,description,deck,image", offset, limit);
+
+			String url = BASE_URL + endpoint;
+
+			System.out.println("Requesting URL: " + url); // Debug log
+
+			Request request = new Request.Builder()
+					.url(url)
+					.header("User-Agent", "ComicApp/1.0")
+					.header("Accept", "application/json")
+					.build();
+
+			try (Response response = client.newCall(request).execute()) {
+				if (!response.isSuccessful()) {
+					System.err.println("Error response code: " + response.code()); // Debug log
+					return null;
+				}
+				String responseBody = response.body() != null ? response.body().string() : null;
+				System.out.println("Response received: " + (responseBody != null ? "yes" : "no")); // Debug log
+				return responseBody;
+			}
+		} catch (IOException e) {
+			System.err.println("Exception in getVolumeIssues: " + e.getMessage()); // Debug log
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
