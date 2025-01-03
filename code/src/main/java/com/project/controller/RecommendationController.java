@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.project.api.API;
 import com.project.model.Comic;
 import com.project.model.Hero;
+import com.project.model.UserLibraryController;
 import com.project.util.DatabaseUtil;
 
 import kotlin.Pair;
@@ -15,7 +16,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RecommendationController {
@@ -139,37 +142,58 @@ public class RecommendationController {
         return new Pair<>(selectedComicName, comics);
     }
 
-
     public List<Comic> getRecommendedComics(int userId, int offset, int limit) {
         List<Comic> recommendations = new ArrayList<>();
+        int remaining = limit;
 
         try (Connection conn = DatabaseUtil.getConnection()) {
-            // Get genres from user's library
+            // Get user's preferred genres from library
             String genreQuery = "SELECT DISTINCT c.genres FROM comic c " +
-                    "JOIN biblio ul ON c.id_comic = ul.id_comic " +
-                    "WHERE ul.id_biblio = ? AND added = 1";
+                    "JOIN biblio b ON c.id_comic = b.id_comic " +
+                    "WHERE b.id_biblio = ? AND b.added = 1 AND c.genres IS NOT NULL AND c.genres != ''";
 
             PreparedStatement stmt = conn.prepareStatement(genreQuery);
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
 
-            List<String> genres = new ArrayList<>();
+            List<String> userGenres = new ArrayList<>();
             while (rs.next()) {
-                String genre = rs.getString("genres");
-                if (genre != null && !genre.isEmpty()) {
-                    genres.add(genre);
+                String genres = rs.getString("genres");
+                if (genres != null && !genres.isEmpty()) {
+                    userGenres.addAll(Arrays.asList(genres.split(",")));
                 }
             }
 
-            if (!genres.isEmpty()) {
-                // Get recommendations based on genres
-                String[] genreArray = genres.toArray(new String[0]);
-                recommendations = getComicsByGenres(genreArray, offset, limit);
+            // Get recommendations for each genre
+            for (String genre : userGenres) {
+                if (remaining <= 0)
+                    break;
+
+                try {
+                    // Calculate limit for this genre
+                    List<Comic> genreComics = api.searchComicsByGenres(genre.trim(), offset, remaining);
+
+                    // Filter out comics already in library
+                    genreComics.removeIf(comic -> isComicInLibrary(userId, comic.getId()));
+
+                    recommendations.addAll(genreComics);
+                    remaining -= genreComics.size();
+
+                } catch (IOException e) {
+                    System.err.println("Error getting recommendations for genre: " + genre);
+                    e.printStackTrace();
+                }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            System.err.println("Database error while getting recommendations: " + e.getMessage());
             e.printStackTrace();
         }
 
         return recommendations;
+    }
+
+    private boolean isComicInLibrary(int userId, int comicId) {
+        UserLibraryController controller = new UserLibraryController();
+        return controller.isComicInLibrary(userId, comicId);
     }
 }

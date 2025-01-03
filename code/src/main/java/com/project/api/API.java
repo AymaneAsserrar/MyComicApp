@@ -275,7 +275,7 @@ public class API {
 
 	public List<Comic> searchComicsByGenres(String genre, int offset, int limit) throws IOException {
 		// Step 1: Fetch Concepts (Genres)
-		List<Integer> conceptIds = fetchConceptIds(genre, limit);
+		List<Integer> conceptIds = fetchConceptIds(genre, 1);
 		if (conceptIds.isEmpty()) {
 			System.out.println("No concepts found for genre: " + genre);
 			return new ArrayList<>();
@@ -340,8 +340,13 @@ public class API {
 				.subList(Math.min(offset, issueIds.size()),
 						Math.min(offset + limit, issueIds.size()));
 
-		for (Integer issueId : limitedIds) {
-			String comicDetailsJson = getIssueDetails(issueId);
+		List<Integer> VolumeIDs = new ArrayList<>();			
+		for(Integer issueId: limitedIds) {
+			VolumeIDs.add(getVolumeIdFromIssue(issueId));
+		}
+        VolumeIDs = VolumeIDs.stream().distinct().toList();
+		for (Integer volumeId : VolumeIDs) {
+			String comicDetailsJson = getComicDetails(volumeId);
 			if (comicDetailsJson != null) {
 				JsonObject comicObj = new Gson().fromJson(comicDetailsJson, JsonObject.class);
 				JsonObject resultsObj = comicObj.getAsJsonObject("results");

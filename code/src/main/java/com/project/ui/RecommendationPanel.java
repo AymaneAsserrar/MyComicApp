@@ -64,7 +64,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         // Initialize message label
-        this.libraryMessageLabel = new JLabel("Your library message here");
+        this.libraryMessageLabel = new JLabel("");
         libraryMessageLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         libraryMessageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -119,7 +119,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         // Initialize controllers and load content
         recommendationController = new RecommendationController();
         loadPopularComics(currentOffset);
-        updateRecommendations();
     }
 
     public void loadPopularComics(int offset) {
@@ -216,14 +215,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (targetPanel == recommendedGridPanel) {
                     // Fetch issue details and then volume details for recommended comics
-                    Comic detailedComic = recommendationController.getComicDetailsFromIssue(comic.getId());
+                    Comic detailedComic = recommendationController.getComicDetails(comic.getId());
                     if (detailedComic != null) {
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
                         parentFrame.displayComicDetails(detailedComic, "Recommendation");
                     }
                 } else if (targetPanel == becauseYouReadPanel) {
                     // Fetch volume details for "Because You Read" comics
-                    Comic detailedComic = recommendationController.getComicDetailsFromIssue(comic.getId());
+                    Comic detailedComic = recommendationController.getComicDetails(comic.getId());
                     if (detailedComic != null) {
                         UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(RecommendationPanel.this);
                         parentFrame.displayComicDetails(detailedComic, "Recommendation");
@@ -777,8 +776,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             libraryMessageLabel.setText("You are not signed in yet");
             recommendedGridPanel.revalidate();
             recommendedGridPanel.repaint();
-        } else {
-            updateRecommendations();
         }
     }
 
