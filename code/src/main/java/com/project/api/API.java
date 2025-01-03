@@ -383,6 +383,12 @@ public class API {
 	}
 
 	public int getVolumeIdFromIssue(int issueId) {
+		String cacheKey = "volumeIdFromIssue_" + issueId;
+		String cachedValue = APICache.get(cacheKey);
+		if (cachedValue != null) {
+			return Integer.parseInt(cachedValue);
+		}
+
 		String fieldList = "volume";
 		String endpoint = "issue/4000-" + issueId + "/?api_key=" + API_KEY
 				+ "&format=json&field_list=" + fieldList;
@@ -401,8 +407,12 @@ public class API {
 			if (jsonResponse != null) {
 				JsonObject responseObj = new Gson().fromJson(jsonResponse, JsonObject.class);
 				JsonObject resultsObj = responseObj.getAsJsonObject("results");
-				JsonObject volumeObj = resultsObj.getAsJsonObject("volume");
-				return volumeObj.get("id").getAsInt();
+				if (resultsObj.has("volume")) {
+					JsonObject volumeObj = resultsObj.getAsJsonObject("volume");
+					int volumeId = volumeObj.get("id").getAsInt();
+					APICache.put(cacheKey, String.valueOf(volumeId)); // cache result
+					return volumeId;
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
