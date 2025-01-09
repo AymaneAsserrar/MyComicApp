@@ -10,9 +10,6 @@ We are building a Java-based application that utilizes Swing for its user interf
 - Database table creation and management
 - Easy to set up and run
 
-## Badges
-
-![Java CI](https://img.shields.io/badge/Java-CI-blue)
 
 ## Visuals
 
