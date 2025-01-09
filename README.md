@@ -22,8 +22,9 @@ To be added
 
 ### Prerequisites
 
-- Java Development Kit (JDK) 11 or higher
+- Java Development Kit (JDK) 22 or higher
 - Git
+- Maven
 
 ### Steps
 
@@ -35,28 +36,14 @@ To be added
 
 2. Build the project:
     ```sh
-    ./gradlew build
+    mvn clean install
     ```
 
 3. Run the application:
     ```sh
-    java -jar build/libs/info4.jar
+    java -jar .\target\ComicAPP-1.0-SNAPSHOT.jar           
     ```
 
 ## Usage
 
 To start the application, simply run the `AppMain` class. The application will set the FlatLaf look and feel, create necessary database tables, and start the UI.
-
-```sh
-java -cp build/classes/java/main com.project.AppMain
-```
-
-## Roadmap
-
-- Add more database functionalities
-- Improve UI components
-- Add Libraries
-
-## Project status
-
-The project is not yet completed.
