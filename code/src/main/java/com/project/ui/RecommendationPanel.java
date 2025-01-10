@@ -33,7 +33,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private JLabel libraryMessageLabel;
     private Map<JButton, Comic> heartButtons;
     private Map<JButton, Comic> starButtons;
-    private Map<JButton, Comic> validationButtons;
     private Map<JButton, Comic> readButtons;
     private UiMain parentFrame;
     private JPanel recommendedGridPanel;
@@ -41,12 +40,12 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     private JPanel becauseYouReadPanel;
     private JLabel becauseYouReadLabel;
     private int becauseYouReadOffset = 0;
+    private boolean recommendationsLoaded = false;
 
     public RecommendationPanel(UiMain parent) {
         this.parentFrame = parent;
         this.heartButtons = new HashMap<>();
         this.starButtons = new HashMap<>();
-        this.validationButtons = new HashMap<>();
         this.readButtons = new HashMap<>();
         parentFrame.addLoginListener(this);
 
@@ -83,7 +82,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         comicsGridPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
         comicsGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         comicsGridPanel.setBackground(new Color(255, 255, 255)); // White background for comics grid
-        addLoadMoreButton(comicsGridPanel, getUserId(parentFrame.getCurrentUserEmail()), this::loadMorePopularComics);
 
         JScrollPane scrollPane = new JScrollPane(comicsGridPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -290,12 +288,10 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     private void initializeRecommendationSection(JPanel mainScrollContent) {
-        // Recommendations Section
         JPanel recommendationsPanel = new JPanel(new BorderLayout());
         recommendationsPanel.setBackground(Color.WHITE);
         recommendationsPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Panel for label and refresh button
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         headerPanel.setBackground(Color.WHITE);
 
@@ -304,7 +300,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendationsLabel.setForeground(Color.BLACK);
         recommendationsLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // Refresh button
         JButton refreshButton = new JButton("reload");
         refreshButton.setPreferredSize(new Dimension(42, 42));
         refreshButton.setFocusPainted(false);
@@ -315,23 +310,20 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         refreshButton.addActionListener(e -> {
-            // Clear and reload recommendations
             recommendedGridPanel.removeAll();
             recommendedOffset = 0;
+            recommendationsLoaded = true;
             updateRecommendations();
         });
 
-        // Add label and button to header panel
         headerPanel.add(recommendationsLabel);
         headerPanel.add(refreshButton);
-
         recommendationsPanel.add(headerPanel, BorderLayout.NORTH);
 
         recommendedGridPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
         recommendedGridPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         recommendedGridPanel.setBackground(Color.WHITE);
 
-        // Create horizontal scroll pane for recommendations
         JScrollPane recommendedScrollPane = new JScrollPane(recommendedGridPanel);
         recommendedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         recommendedScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -339,8 +331,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendedScrollPane.setPreferredSize(new Dimension(1000, 400));
 
         recommendationsPanel.add(recommendedScrollPane, BorderLayout.CENTER);
-        addLoadMoreButton(recommendedGridPanel, getUserId(parentFrame.getCurrentUserEmail()),
-                () -> loadMoreRecommendations(getUserId(parentFrame.getCurrentUserEmail())));
 
         mainScrollContent.add(Box.createVerticalStrut(20));
         mainScrollContent.add(recommendationsPanel);
@@ -399,6 +389,10 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     public void updateRecommendations() {
+        if (!recommendationsLoaded) {
+            return;
+        }
+        
         LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading recommendations...");
         SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
             @Override
@@ -423,7 +417,8 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         for (Comic comic : recommendations) {
                             addComicPanel(comic, recommendedGridPanel);
                         }
-                        Runnable doNotifyProgressChange = () -> {};
+                        Runnable doNotifyProgressChange = () -> {
+                        };
                         addLoadMoreButton(recommendedGridPanel, getUserId(parentFrame.getCurrentUserEmail()),
                                 doNotifyProgressChange);
                     } else {
@@ -563,14 +558,11 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                 if (currentState) {
                     if (controller.removeComicFromLibrary(userId, comic.getId())) {
                         likeButton.setIcon(new ImageIcon(whiteHeartImage));
-                        // Reset and refresh recommendations
-                        recommendedOffset = 0;
+
                     }
                 } else {
                     if (controller.addComicToLibrary(userId, comic)) {
                         likeButton.setIcon(new ImageIcon(redHeartImage));
-                        // Reset and refresh recommendations
-                        recommendedOffset = 0;
                     }
                 }
                 parentFrame.refreshAllPanels(); // Force a UI refresh in RecommendationPanel
@@ -767,20 +759,20 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
     @Override
     public void onUserLogin(String email) {
-        // Reset offsets
         currentOffset = 0;
         recommendedOffset = 0;
+        becauseYouReadOffset = 0;
+        recommendationsLoaded = false;
 
-        // Clear existing content
         becauseYouReadPanel.removeAll();
         recommendedGridPanel.removeAll();
         comicsGridPanel.removeAll();
-        addLoadMoreButton(comicsGridPanel, getUserId(parentFrame.getCurrentUserEmail()), this::loadMorePopularComics);
 
-        loadMorePopularComics(); // Reload popular comics
-        // Refresh button states only
-        refreshStarButtons();
+        loadPopularComics(0);
+        addLoadMoreButton(comicsGridPanel, getUserId(email), this::loadMorePopularComics);
+        
         refreshHeartButtons();
+        refreshStarButtons();
         refreshReadButtons();
     }
 
@@ -824,6 +816,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         currentOffset = 0;
         recommendedOffset = 0;
         becauseYouReadOffset = 0;
+        recommendationsLoaded = false;
 
         // Clear panels
         recommendedGridPanel.removeAll();
@@ -866,6 +859,5 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             loadPopularComics(0); // Reset offset and reload
         });
     }
-
 
 }

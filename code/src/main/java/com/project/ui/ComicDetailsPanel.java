@@ -9,12 +9,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import com.project.model.Hero;
 import com.project.controller.SearchController;
+import com.project.api.API;
 
 public class ComicDetailsPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private JLabel titleLabel;
     private JLabel coverLabel;
-    private JTextArea descriptionArea;
     private JTextArea authorsArea;
     private JPanel charactersPanel;
     private JLabel ratingLabel;
@@ -26,6 +26,7 @@ public class ComicDetailsPanel extends JPanel {
     private JTextArea datesArea;
     private JScrollPane scrollPane;
     private JTextArea genresArea;
+    private JEditorPane detailedDescriptionPane;
 
     public ComicDetailsPanel() {
         setLayout(new BorderLayout());
@@ -93,7 +94,6 @@ public class ComicDetailsPanel extends JPanel {
         deckArea = createTextArea(true);
         genresArea = createTextArea(false);
         authorsArea = createTextArea(false);
-        descriptionArea = createTextArea(true);
         charactersPanel = new JPanel();
         charactersPanel.setLayout(new BoxLayout(charactersPanel, BoxLayout.Y_AXIS));
         charactersPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -104,7 +104,7 @@ public class ComicDetailsPanel extends JPanel {
         ratingLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
         // Add sections with headers
-        addSection(detailsPanel, "Description", descriptionArea);
+        addSection(detailsPanel, "Detailed Description", createDetailedDescriptionPane());
         addSection(detailsPanel, "Genres", genresArea);
         addSection(detailsPanel, "Publisher", authorsArea);
         addSection(detailsPanel, "Issue Information", issueInfoArea);
@@ -132,6 +132,19 @@ public class ComicDetailsPanel extends JPanel {
         return area;
     }
 
+    private JScrollPane createDetailedDescriptionPane() {
+        detailedDescriptionPane = new JEditorPane();
+        detailedDescriptionPane.setContentType("text/html");
+        detailedDescriptionPane.setEditable(false);
+        detailedDescriptionPane.setFont(new Font("Arial", Font.PLAIN, 14));
+        detailedDescriptionPane.setBackground(getBackground());
+
+        JScrollPane detailedScrollPane = new JScrollPane(detailedDescriptionPane);
+        detailedScrollPane.setPreferredSize(new Dimension(400, 300));
+        detailedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        return detailedScrollPane;
+    }
+
     private void addSection(JPanel container, String title, JComponent component) {
         JLabel header = new JLabel(title);
         header.setFont(new Font("Arial", Font.BOLD, 16));
@@ -142,13 +155,7 @@ public class ComicDetailsPanel extends JPanel {
         container.add(Box.createVerticalStrut(5));
 
         component.setAlignmentX(Component.LEFT_ALIGNMENT);
-        if (component instanceof JTextArea && ((JTextArea) component).getPreferredSize().height > 50) {
-            JScrollPane scroll = new JScrollPane(component);
-            scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-            container.add(scroll);
-        } else {
-            container.add(component);
-        }
+        container.add(component);
     }
 
     public void displayComicDetails(Comic comic) {
@@ -181,9 +188,11 @@ public class ComicDetailsPanel extends JPanel {
                 comic.getDateLastUpdated());
         datesArea.setText(dates);
 
-        descriptionArea.setText(comic.getDescription());
         displayCharacterLinks(comic);
         teamsArea.setText(comic.getTeamsAsString());
+
+        // Fetch and set detailed description as HTML content
+        fetchAndDisplayDetailedDescription(comic.getId());
 
         // **Reset scroll position to top**
         SwingUtilities.invokeLater(() -> {
@@ -195,6 +204,32 @@ public class ComicDetailsPanel extends JPanel {
 
         revalidate();
         repaint();
+    }
+
+    private void fetchAndDisplayDetailedDescription(int comicId) {
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                API api = new API();
+                return api.getComicDescriptionAsHtml(comicId);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String htmlDescription = get();
+                    System.out.println("Received HTML: " + htmlDescription); // Debug logging
+                    detailedDescriptionPane.setText(htmlDescription);
+                    detailedDescriptionPane.setCaretPosition(0);
+                } catch (Exception e) {
+                    System.out.println("Error displaying description: " + e.getMessage());
+                    e.printStackTrace();
+                    detailedDescriptionPane.setText("<html><body>Failed to load detailed description: " +
+                            e.getMessage() + "</body></html>");
+                }
+            }
+        };
+        worker.execute();
     }
 
     public void setPreviousPanel(String panel) {
