@@ -20,6 +20,7 @@ public class Comic {
     private String deck;
     private String rating;
     private List<String> genres;
+    private String siteDetailUrl;
 
     public Comic() {
         this.heroes = new ArrayList<>();
@@ -90,7 +91,13 @@ public class Comic {
     public List<String> getGenres() {
         return genres;
     }
-
+    public String getSiteDetailUrl() {
+        return siteDetailUrl;
+    }
+    
+    public void setSiteDetailUrl(String url) {
+        this.siteDetailUrl = url;
+    }
     public String getGenresAsString() {
         if (genres == null || genres.isEmpty()) {
             return "";
