@@ -52,7 +52,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // Main scrollable content panel
+        // Main scrollable content panel.
         JPanel mainScrollContent = new JPanel();
         mainScrollContent.setLayout(new BoxLayout(mainScrollContent, BoxLayout.Y_AXIS));
         mainScrollContent.setBackground(new Color(240, 240, 240));
