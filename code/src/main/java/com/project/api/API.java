@@ -18,16 +18,17 @@ import java.util.Set;
 
 public class API {
 	private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
-	private static final String API_KEY = "e22bd0a8fe36c642d47999f6e61f8e252a717ec7";
-	private static OkHttpClient client;
+    private final APIKeyManager keyManager;
+    private static OkHttpClient client;
 
-	static {
-		HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-		logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-		client = new OkHttpClient.Builder()
-				.addInterceptor(logging)
-				.build();
-	}
+    public API() {
+        this.keyManager = new APIKeyManager();
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        client = new OkHttpClient.Builder()
+                .addInterceptor(logging)
+                .build();
+    }
 
 	public String getPopularComics(int offset, int limit) {
 		String cacheKey = "popularComics_" + offset + "_" + limit;
@@ -40,7 +41,7 @@ public class API {
 				"date_added,date_last_updated,first_issue,last_issue," +
 				"publisher,start_year,character_credits,rating";
 	
-		String endpoint = "volumes/?api_key=" + API_KEY
+		String endpoint = "volumes/?api_key=" + keyManager.getCurrentKey()
 				+ "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit
 				+ "&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
@@ -68,7 +69,7 @@ public class API {
 				"date_added,date_last_updated,first_issue,last_issue," +
 				"publisher,start_year,character_credits,rating,concepts"; // Add concepts to fieldList
 
-		String endpoint = "volume/4050-" + comicId + "/?api_key=" + API_KEY
+		String endpoint = "volume/4050-" + comicId + "/?api_key=" + keyManager.getCurrentKey()
 				+ "&format=json&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
 
@@ -200,7 +201,7 @@ public class API {
 	public String searchComicsByTitle(String title) {
 		String fieldList = "id,name,description,deck,image,person_credits," +
 				"character_credits,rating,concepts"; // Add concepts to fieldList
-		String endpoint = "search/?api_key=" + API_KEY
+		String endpoint = "search/?api_key=" + keyManager.getCurrentKey()
 				+ "&format=json&resources=volume&query=" + title
 				+ "&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
@@ -223,7 +224,7 @@ public class API {
 
 	// Méthode pour chercher des personnages
 	public String fetchCharacterData(String name) {
-		String endpoint = "characters/?api_key=" + API_KEY + "&format=json&limit=10&offset=0&filter=name:" + name;
+		String endpoint = "characters/?api_key=" + keyManager.getCurrentKey() + "&format=json&limit=10&offset=0&filter=name:" + name;
 		String url = BASE_URL + endpoint;
 
 		Request request = new Request.Builder()
@@ -243,7 +244,7 @@ public class API {
 	}
 
 	public String fetchCharacterDetails(int characterId) {
-		String endpoint = "character/4005-" + characterId + "/?api_key=" + API_KEY + "&format=json";
+		String endpoint = "character/4005-" + characterId + "/?api_key=" + keyManager.getCurrentKey() + "&format=json";
 		String url = BASE_URL + endpoint;
 
 		Request request = new Request.Builder()
@@ -291,7 +292,7 @@ public class API {
 			}
 
 			String fieldList = "id,name,description,issue_credits";
-			String endpoint = "concept/4015-" + conceptId + "/?api_key=" + API_KEY
+			String endpoint = "concept/4015-" + conceptId + "/?api_key=" + keyManager.getCurrentKey()
 					+ "&format=json&field_list=" + fieldList + "&limit=" + limit;
 
 			String url = BASE_URL + endpoint;
@@ -362,7 +363,7 @@ public class API {
 
 	public String getIssueDetails(int issueId) {
 		String fieldList = "id,name,description,deck,image,volume,concepts";
-		String endpoint = "issue/4000-" + issueId + "/?api_key=" + API_KEY
+		String endpoint = "issue/4000-" + issueId + "/?api_key=" + keyManager.getCurrentKey()
 				+ "&format=json&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
 
@@ -390,7 +391,7 @@ public class API {
 		}
 
 		String fieldList = "volume";
-		String endpoint = "issue/4000-" + issueId + "/?api_key=" + API_KEY
+		String endpoint = "issue/4000-" + issueId + "/?api_key=" + keyManager.getCurrentKey()
 				+ "&format=json&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
 
@@ -425,7 +426,7 @@ public class API {
 		String[] genres = genre.split(",");
 
 		for (String g : genres) {
-			String url = BASE_URL + "concepts/?api_key=" + API_KEY +
+			String url = BASE_URL + "concepts/?api_key=" + keyManager.getCurrentKey() +
 					"&format=json&field_list=id,name" +
 					"&filter=name:" + g.trim() + "&limit=" + limit;
 
@@ -461,7 +462,7 @@ public class API {
 	public String getVolumeIssues(int comicId, int offset, int limit) {
 		try {
 			// Construct the correct URL with BASE_URL
-			String endpoint = String.format("issues/?api_key=" + API_KEY +
+			String endpoint = String.format("issues/?api_key=" + keyManager.getCurrentKey() +
 					"&filter=volume:" + comicId
 					+ "&format=json&offset=%d&limit=%d&field_list=id,name,description,deck,image", offset, limit);
 
