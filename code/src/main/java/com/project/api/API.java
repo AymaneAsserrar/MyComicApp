@@ -74,7 +74,7 @@ public class API {
 	}
 
 	public String getComicDescriptionAsHtml(int comicId) throws IOException {
-		String url = BASE_URL + "volume/4050-" + comicId + "?api_key=" + API_KEY
+		String url = BASE_URL + "volume/4050-" + comicId + "?api_key=" + keyManager.getCurrentKey("volume")
 				+ "&format=xml&field_list=description";
 
 		Request request = new Request.Builder()
