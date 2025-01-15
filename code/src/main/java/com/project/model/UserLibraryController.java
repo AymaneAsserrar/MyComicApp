@@ -371,4 +371,19 @@ public class UserLibraryController {
     public boolean resetReadStatus(int userId, int comicId) {
         return updateReadStatus(userId, comicId, null);
     }
+
+    public boolean isLibraryEmpty(int userId) {
+        String query = "SELECT COUNT(*) FROM biblio WHERE id_biblio = ? AND added = 1";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) == 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
 }
