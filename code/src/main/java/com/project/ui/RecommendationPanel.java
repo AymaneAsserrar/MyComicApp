@@ -259,7 +259,19 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
         refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
         refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        refreshButton.addActionListener(e -> loadBecauseYouReadComics());
+        refreshButton.addActionListener(e -> {
+            recommendedGridPanel.removeAll();
+            recommendedOffset = 0;
+            recommendationsLoaded = true;
+            String userEmail = parentFrame.getCurrentUserEmail();
+            if (userEmail == null || userEmail.isEmpty()) {
+                libraryMessageLabel.setText("You are not signed in yet");
+                libraryMessageLabel.setVisible(true);
+                hideMessageAfterDelay();
+            } else {
+                loadBecauseYouReadComics();;
+            }
+        });
 
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
