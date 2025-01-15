@@ -117,7 +117,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
     }
 
     public void loadPopularComics(int offset) {
-        LoadingDialog loadingDialog = new LoadingDialog(parentFrame, "Loading comics...");
         SwingWorker<List<Comic>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<Comic> doInBackground() throws Exception {
@@ -126,7 +125,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
 
             @Override
             protected void done() {
-                loadingDialog.dispose();
                 try {
                     List<Comic> comics = get();
                     for (Comic comic : comics) {
@@ -141,7 +139,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
             }
         };
         worker.execute();
-        loadingDialog.setVisible(true);
     }
 
     private void addComicPanel(Comic comic, JPanel targetPanel) {
