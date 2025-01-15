@@ -11,10 +11,19 @@ import com.google.gson.JsonObject;
 import com.project.model.Comic;
 import com.project.model.Hero;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class API {
 	private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
@@ -36,7 +45,7 @@ public class API {
 		if (cachedResponse != null) {
 			return cachedResponse;
 		}
-	
+
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 				"date_added,date_last_updated,first_issue,last_issue," +
 				"publisher,start_year,character_credits,rating";
@@ -45,12 +54,12 @@ public class API {
 				+ "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit
 				+ "&field_list=" + fieldList;
 		String url = BASE_URL + endpoint;
-	
+
 		Request request = new Request.Builder()
 				.url(url)
 				.header("User-Agent", "ComicApp/1.0")
 				.build();
-	
+
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
 				throw new IOException("Request error: HTTP Code " + response.code());
@@ -61,6 +70,48 @@ public class API {
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+
+	public String getComicDescriptionAsHtml(int comicId) throws IOException {
+		String url = BASE_URL + "volume/4050-" + comicId + "?api_key=" + API_KEY
+				+ "&format=xml&field_list=description";
+
+		Request request = new Request.Builder()
+				.url(url)
+				.header("User-Agent", "ComicApp/1.0")
+				.build();
+
+		try (Response response = client.newCall(request).execute()) {
+			if (!response.isSuccessful()) {
+				System.out.println("API call failed: " + response.code());
+				throw new IOException("API call failed: " + response.code());
+			}
+
+			String xmlResponse = response.body().string();
+			System.out.println("API Response: " + xmlResponse); // Debug logging
+
+			// Parse the XML response to extract the description
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document doc = builder.parse(new InputSource(new StringReader(xmlResponse)));
+			NodeList descriptionNodes = doc.getElementsByTagName("description");
+			String description = "";
+			if (descriptionNodes.getLength() > 0) {
+				description = descriptionNodes.item(0).getTextContent();
+			}
+
+			if (description != null && !description.trim().isEmpty()) {
+				return "<html><body style='font-family: Arial; font-size: 14px; padding: 10px;'>"
+						+ description
+						+ "</body></html>";
+			}
+
+			return "<html><body>No detailed description available.</body></html>";
+		} catch (Exception e) {
+			System.out.println("Error fetching description: " + e.getMessage());
+			e.printStackTrace();
+			throw new IOException("Failed to fetch comic description", e);
 		}
 	}
 
@@ -341,11 +392,11 @@ public class API {
 				.subList(Math.min(offset, issueIds.size()),
 						Math.min(offset + limit, issueIds.size()));
 
-		List<Integer> VolumeIDs = new ArrayList<>();			
-		for(Integer issueId: limitedIds) {
+		List<Integer> VolumeIDs = new ArrayList<>();
+		for (Integer issueId : limitedIds) {
 			VolumeIDs.add(getVolumeIdFromIssue(issueId));
 		}
-        VolumeIDs = VolumeIDs.stream().distinct().toList();
+		VolumeIDs = VolumeIDs.stream().distinct().toList();
 		for (Integer volumeId : VolumeIDs) {
 			String comicDetailsJson = getComicDetails(volumeId);
 			if (comicDetailsJson != null) {
