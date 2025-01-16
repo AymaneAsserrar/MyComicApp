@@ -25,9 +25,13 @@ public class AppMain {
                                 Thread.sleep(4000); // Remaining delay
                                 return null;
                             }
+
+                            @Override
+                            protected void done() {
+                                SwingUtilities.invokeLater(() -> mainUI.setVisible(true));
+                            }
                         };
                         worker.execute();
-                        worker.get(); // Wait for completion
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

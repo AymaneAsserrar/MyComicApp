@@ -248,7 +248,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         becauseYouReadLabel.setForeground(Color.BLACK);
         becauseYouReadLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        JButton refreshButton = new JButton("Refresh");
+        JButton refreshButton = new JButton("Reload");
         refreshButton.setPreferredSize(new Dimension(100, 30));
         refreshButton.setFocusPainted(false);
         refreshButton.setBackground(new Color(70, 130, 180));
@@ -312,13 +312,13 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendationsLabel.setForeground(Color.BLACK);
         recommendationsLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        JButton refreshButton = new JButton("reload");
-        refreshButton.setPreferredSize(new Dimension(42, 42));
+
+        JButton refreshButton = new JButton("Reload");
+        refreshButton.setPreferredSize(new Dimension(70, 30));
         refreshButton.setFocusPainted(false);
-        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         refreshButton.setBackground(new Color(70, 130, 180));
         refreshButton.setForeground(Color.WHITE);
-        refreshButton.setFont(new Font("Arial", Font.BOLD, 9));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 12));
         refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         refreshButton.addActionListener(e -> {
