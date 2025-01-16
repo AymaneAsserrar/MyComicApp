@@ -3,7 +3,6 @@ import com.project.ui.SplashScreen;
 import com.project.util.DatabaseUtil;
 import javax.swing.*;
 import com.project.controller.RecommendationController;
-
 public class AppMain {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -12,26 +11,12 @@ public class AppMain {
                 UiMain mainUI = new UiMain();
                 mainUI.setVisible(false);
                 
-                // Create loading task that does not block UI
                 Runnable loadingTask = () -> {
                     try {
-                        SwingWorker<Void, Void> worker = new SwingWorker<>() {
-                            @Override
-                            protected Void doInBackground() throws Exception {
-                                Thread.sleep(1000); // Initial delay
-                                DatabaseUtil.createTables();
-                                RecommendationController controller = new RecommendationController();
-                                controller.getPopularComics(0, 10);
-                                Thread.sleep(4000); // Remaining delay
-                                return null;
-                            }
-
-                            @Override
-                            protected void done() {
-                                SwingUtilities.invokeLater(() -> mainUI.setVisible(true));
-                            }
-                        };
-                        worker.execute();
+                        DatabaseUtil.createTables();
+                        RecommendationController controller = new RecommendationController();
+                        controller.getPopularComics(0, 10);
+                        Thread.sleep(5000);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
