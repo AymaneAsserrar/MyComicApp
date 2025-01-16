@@ -62,6 +62,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("volumes");
+				}
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
 			String responseBody = response.body().string();
@@ -84,6 +87,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("volume");
+				}
 				System.out.println("API call failed: " + response.code());
 				throw new IOException("API call failed: " + response.code());
 			}
@@ -131,6 +137,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("volume");
+				}
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
 			return response.body() != null ? response.body().string() : null;
@@ -264,6 +273,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("search");
+				}
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
 			return response.body() != null ? response.body().string() : null;
@@ -285,6 +297,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("characters");
+				}
 				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
 			}
 			return response.body() != null ? response.body().string() : null;
@@ -305,6 +320,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("character");
+				}
 				throw new IOException("Erreur dans la requête: Code HTTP " + response.code());
 			}
 			return response.body() != null ? response.body().string() : null;
@@ -425,6 +443,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("issue");
+				}
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
 			return response.body() != null ? response.body().string() : null;
@@ -453,6 +474,9 @@ public class API {
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("issue");
+				}
 				throw new IOException("Request error: HTTP Code " + response.code());
 			}
 			String jsonResponse = response.body() != null ? response.body().string() : null;
@@ -492,6 +516,9 @@ public class API {
 
 			Response response = client.newCall(request).execute();
 			if (!response.isSuccessful()) {
+				if (response.code() == 420) {
+					keyManager.forceKeyRotation("concepts");
+				}
 				throw new IOException("Error getting concepts: HTTP " + response.code());
 			}
 
@@ -529,6 +556,9 @@ public class API {
 
 			try (Response response = client.newCall(request).execute()) {
 				if (!response.isSuccessful()) {
+					if (response.code() == 420) {
+						keyManager.forceKeyRotation("issues");
+					}
 					System.err.println("Error response code: " + response.code()); // Debug log
 					return null;
 				}

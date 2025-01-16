@@ -35,4 +35,7 @@ public class APIKeyManager {
         int nextIndex = (currentKeyIndex.get() + 1) % apiKeys.size();
         currentKeyIndex.set(nextIndex);
     }
+    public synchronized void forceKeyRotation(String endpoint) {
+        rotateKey(endpoint);
+    }
 }
