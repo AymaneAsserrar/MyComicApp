@@ -44,12 +44,13 @@ public class SplashScreen extends JWindow {
             // Setup and start audio
             CompletableFuture.runAsync(() -> {
                 setupAudio();
-                SwingUtilities.invokeLater(() -> {
-                    if (audioClip != null) {
-                        audioClip.setFramePosition(0);
+                if (audioClip != null) {
+                    SwingUtilities.invokeLater(() -> {
+                        audioClip.setFramePosition(0); // Ensure we start from beginning
+                        audioClip.flush(); // Clear any buffered audio
                         audioClip.start();
-                    }
-                });
+                    });
+                }
             }),
             // Start animation when frames are ready
             CompletableFuture.runAsync(() -> {
@@ -93,13 +94,6 @@ public class SplashScreen extends JWindow {
                         new BufferedInputStream(soundURL.openStream()));
                 audioClip = AudioSystem.getClip();
                 audioClip.open(audioStream);
-                // Start audio immediately when ready
-                SwingUtilities.invokeLater(() -> {
-                    if (audioClip != null) {
-                        audioClip.setFramePosition(0);
-                        audioClip.start();
-                    }
-                });
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -198,7 +192,7 @@ public class SplashScreen extends JWindow {
 
     private void startProgress() {
         final long startTime = System.currentTimeMillis();
-        final int totalDuration = 4300; // Match with total loading time
+        final int totalDuration = 4500; // Match with total loading time
 
         progressTimer = new Timer(16, e -> { // More frequent updates
             long elapsed = System.currentTimeMillis() - startTime;
