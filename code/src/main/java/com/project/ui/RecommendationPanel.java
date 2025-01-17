@@ -257,16 +257,14 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         refreshButton.setBorder(new EmptyBorder(5, 5, 5, 5));
         refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         refreshButton.addActionListener(e -> {
-            recommendedGridPanel.removeAll();
-            recommendedOffset = 0;
-            recommendationsLoaded = true;
+            becauseYouReadPanel.removeAll(); 
             String userEmail = parentFrame.getCurrentUserEmail();
             if (userEmail == null || userEmail.isEmpty()) {
                 libraryMessageLabel.setText("You are not signed in yet");
                 libraryMessageLabel.setVisible(true);
                 hideMessageAfterDelay();
             } else {
-                loadBecauseYouReadComics();;
+                loadBecauseYouReadComics();
             }
         });
 
@@ -311,7 +309,6 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         recommendationsLabel.setFont(new Font("Arial", Font.BOLD, 30));
         recommendationsLabel.setForeground(Color.BLACK);
         recommendationsLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
-
 
         JButton refreshButton = new JButton("Reload");
         refreshButton.setPreferredSize(new Dimension(70, 30));
@@ -407,6 +404,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         loadingDialog.setVisible(true);
     }
 
+    // Update updateRecommendations() method:
     public void updateRecommendations() {
         if (!recommendationsLoaded) {
             return;
@@ -436,10 +434,10 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
                         for (Comic comic : recommendations) {
                             addComicPanel(comic, recommendedGridPanel);
                         }
-                        Runnable doNotifyProgressChange = () -> {
-                        };
-                        addLoadMoreButton(recommendedGridPanel, getUserId(parentFrame.getCurrentUserEmail()),
-                                doNotifyProgressChange);
+                        // Update this part to use loadMoreRecommendations
+                        int userId = getUserId(parentFrame.getCurrentUserEmail());
+                        addLoadMoreButton(recommendedGridPanel, userId,
+                                () -> loadMoreRecommendations(userId));
                     } else {
                         libraryMessageLabel.setText("Add a comic to your library to get recommendations");
                         libraryMessageLabel.setVisible(true);
@@ -457,24 +455,7 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         loadingDialog.setVisible(true);
     }
 
-    private boolean hasNoComicsWithGenres(int userId) {
-        try (Connection conn = DatabaseUtil.getConnection()) {
-            String genreQuery = "SELECT COUNT(*) FROM comic c " +
-                    "JOIN biblio ul ON c.id_comic = ul.id_comic " +
-                    "WHERE ul.id_biblio = ? AND added = 1 AND c.genres IS NOT NULL AND c.genres != ''";
 
-            PreparedStatement stmt = conn.prepareStatement(genreQuery);
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1) == 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
 
     private void addLoadMoreButton(JPanel panel, int userId, Runnable loadMoreAction) {
         JButton loadMoreButton = new JButton("→");
