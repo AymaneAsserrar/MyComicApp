@@ -1,50 +1,49 @@
-# Comic application
+# Comic Application
 
-## Déscription
+## Description
 
-L'application de comics est destinée aux fans de bandes dessinées pour rechercher, visualiser et gérer leurs comics. Ils peuvent même recevoir des recommandations basées sur leur bibliothèque personnelle.
+The comic application is designed for comic book fans to search, view, and manage their comics. Users can even receive recommendations based on their personal library.
 
-L'application basée sur Java, utilise Swing pour son interface utilisateur et FlatLaf pour un look moderne. L'application inclut également une base de données pour la création et la gestion de tables.
+The application, built in Java, uses Swing for its user interface and FlatLaf for a modern look. It also includes a database for table creation and management.
 
-## Fonctionnalités
+## Features
 
-- Rechercher des comics par titre, avoir des informations sur ce titre (auteurs, personnages…)
-- Rechercher des personnages, avoir des informations sur ce personnage et la liste des titres dans lesquels il apparaît
-- Avoir des recommandations générales sur des comics
-- Création d'un compte personnel
-- Gestion de  bibliothèque de comics (comics que je possède, que je suis en train de lire et que j’ai terminé de lire)
-- Avoir des recommandations de lecture basées sur sa propre bibliothèque
+- Search for comics by title and view information about the title (authors, characters, etc.)
+- Search for characters, view details about them, and see the list of titles they appear in
+- Get general recommendations for comics
+- Create a personal account
+- Manage a personal comic library (comics I own, am currently reading, and have finished reading)
+- Get personalized reading recommendations based on your own library
 
-
-## Visuels
-A ajouter
+## Visuals
+To be added
 
 ## Installation
 
-### Prérequis
+### Prerequisites
 
-- Java Development Kit (JDK) 22 ou version ultérieure
+- Java Development Kit (JDK) 22 or later
 - Git
 - Maven
 
-### Etapes
+### Steps
 
-1. Cloner le dépot:
+1. Clone the repository:
     ```sh
     git clone https://devops.telecomste.fr/prinfo/2024-25/info4.git
     cd info4
     ```
 
-2. Construire le projet:
+2. Build the project:
     ```sh
     mvn clean install
     ```
 
-3. Lancer l'application:
+3. Launch the application:
     ```sh
     java -jar .\target\ComicAPP-1.0-SNAPSHOT.jar           
     ```
 
 ## Usage
 
-Pour démarrer l'application, il suffit de lancer  le fichier `AppMain`. L'application appliquera le look moderne de FlatLaf, créera les tables nécessaires dans la base de données et démarrera l'interface utilisateur.
+To start the application, simply run the `AppMain` file. The application will apply the modern FlatLaf look, create the necessary tables in the database, and launch the user interface.
