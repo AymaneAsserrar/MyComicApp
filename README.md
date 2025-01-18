@@ -39,7 +39,7 @@ Note: Screenshots show actual application interfaces and features in use.
 
 ## Installation
 
-## Notice
+### Notice
 
 -We use an api key that ComicVine provides after just logging.
 
