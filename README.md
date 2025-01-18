@@ -30,9 +30,9 @@ The application, built in Java, uses Swing for its user interface and FlatLaf fo
 ![Personal Library](images/librarypage.png)
 *Personal library management with reading status tracking*
 
-### Logging panel
-![Logging Panel](images/logingpage.png)
-*Logging panel with sign-up options and forget password options*
+### Login panel
+![Login Panel](images/logingpage.png)
+*Login panel with sign-up options and forget password options*
 *There is an admin email that is created automatically to test, email: "admin@admin.com" password: "admin"*
 
 Note: Screenshots show actual application interfaces and features in use.
