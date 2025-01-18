@@ -6,6 +6,7 @@ The comic application is designed for comic book fans to search, view, and manag
 
 The application, built in Java, uses Swing for its user interface and FlatLaf for a modern look. It also includes a database for table creation and management.
 
+
 ## Features
 
 - Search for comics by title and view information about the title (authors, characters, etc.)
@@ -16,9 +17,32 @@ The application, built in Java, uses Swing for its user interface and FlatLaf fo
 - Get personalized reading recommendations based on your own library
 
 ## Visuals
-To be added
+
+### Main Interface
+![Main Interface](images/homepage.png)
+*The application's main interface with navigation and recommendations*
+
+### Comic Details
+![Comic Details](images/detailspage.png)
+*Detailed view of comic information including description, characters, and publication details*
+
+### Library Management
+![Personal Library](images/librarypage.png)
+*Personal library management with reading status tracking*
+
+### Logging panel
+![Logging Panel](images/logingpage.png)
+*Logging panel with sign-up options and forget password options*
+*There is an admin email that is created automatically to test, email: "admin@admin.com" password: "admin"*
+
+Note: Screenshots show actual application interfaces and features in use.
 
 ## Installation
+
+## Notice
+
+-We use an api key that ComicVine provides after just logging.
+-We use an smtp to do email verification using gmail, you need to get your own app password from google settings or change smtp provider
 
 ### Prerequisites
 
