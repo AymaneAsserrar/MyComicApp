@@ -42,6 +42,7 @@ Note: Screenshots show actual application interfaces and features in use.
 ## Notice
 
 -We use an api key that ComicVine provides after just logging.
+
 -We use an smtp to do email verification using gmail, you need to get your own app password from google settings or change smtp provider
 
 ### Prerequisites
