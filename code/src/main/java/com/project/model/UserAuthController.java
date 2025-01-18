@@ -1,9 +1,8 @@
-package com.project.controller;
+package com.project.model;
 
 import com.project.util.Hashing;
 import com.project.util.DatabaseUtil;
 import com.project.util.EmailUtil;
-import com.project.model.User;
 
 import java.security.SecureRandom;
 import java.sql.Connection;

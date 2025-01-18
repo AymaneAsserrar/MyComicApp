@@ -1,6 +1,6 @@
 package com.project.ui;
 
-import com.project.controller.UserAuthController;
+import com.project.model.UserAuthController;
 import com.project.util.EmailUtil;
 
 import javax.swing.*;

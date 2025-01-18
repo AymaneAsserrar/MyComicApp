@@ -3,7 +3,7 @@ package com.project.ui;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 
-import com.project.controller.UserAuthController;
+import com.project.model.UserAuthController;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
