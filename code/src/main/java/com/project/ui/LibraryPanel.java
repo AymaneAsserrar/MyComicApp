@@ -1,5 +1,6 @@
 package com.project.ui;
 
+import com.project.controller.SearchController;
 import com.project.model.Comic;
 import com.project.model.UserLibraryController;
 import com.project.util.DatabaseUtil;
@@ -179,8 +180,9 @@ public class LibraryPanel extends JPanel {
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                Comic detailedComic = getDetailedComic(comic);
                 UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(LibraryPanel.this);
-                parentFrame.displayComicDetails(comic, "Library");
+                parentFrame.displayComicDetails(detailedComic, "Library");
             }
         });
 
@@ -193,5 +195,14 @@ public class LibraryPanel extends JPanel {
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicsGridPanel.add(comicPanel);
+    }
+
+    private Comic getDetailedComic(Comic basicComic) {
+        SearchController searchController = new SearchController();
+        Comic detailedComic = searchController.getComicDetails(basicComic.getId());
+        if (detailedComic != null) {
+            return detailedComic;
+        }
+        return basicComic; // Fallback to basic comic if details fetch fails
     }
 }

@@ -85,7 +85,7 @@ public class UiMain extends JFrame {
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         navPanel.setBackground(new Color(50, 50, 50));
         JLabel libraryLabel = createHeaderLabel("Library");
-        JLabel readlistLabel = createHeaderLabel("Readlist");
+        JLabel readlistLabel = createHeaderLabel("ReadList");
         JLabel wishlistLabel = createHeaderLabel("Wishlist");
         navPanel.add(homeLabel);
         navPanel.add(libraryLabel);
@@ -152,7 +152,7 @@ public class UiMain extends JFrame {
         readListPanel = new ReadListPanel();
         containerPanel.add(libraryPanel, "Library");
         containerPanel.add(wishlistPanel, "Wishlist");
-        containerPanel.add(readListPanel, "Readlist");
+        containerPanel.add(readListPanel, "ReadList");
 
         add(containerPanel, BorderLayout.CENTER);
 
@@ -178,7 +178,7 @@ public class UiMain extends JFrame {
                 if ("Wishlist".equals(text)) {
                     showWishlistPanel();
                 }
-                if ("Readlist".equals(text)) {
+                if ("ReadList".equals(text)) {
                     showReadListPanel();
                 }
             }
@@ -207,7 +207,7 @@ public class UiMain extends JFrame {
 
     private void showReadListPanel() {
         readListPanel.updateReadlist(currentUserEmail);
-        cardLayout.show(containerPanel, "Readlist");
+        cardLayout.show(containerPanel, "ReadList");
     }
 
     public void displaySearchResults(String searchText, String searchType) {

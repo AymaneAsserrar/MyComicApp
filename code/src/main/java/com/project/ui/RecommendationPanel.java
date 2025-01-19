@@ -178,9 +178,11 @@ public class RecommendationPanel extends JPanel implements UiMain.UserLoginListe
         // Panel to hold buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
-        buttonPanel.add(starButton);
-        buttonPanel.add(likeButton);
-        buttonPanel.add(readButton);
+        if(targetPanel != becauseYouReadPanel) {
+            buttonPanel.add(starButton);
+            buttonPanel.add(likeButton);
+            buttonPanel.add(readButton);
+        }
 
         // Cover image
         JLabel coverLabel = new JLabel();

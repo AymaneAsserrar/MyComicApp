@@ -1,5 +1,6 @@
 package com.project.ui;
 
+import com.project.controller.SearchController;
 import com.project.model.Comic;
 import com.project.model.UserLibraryController;
 import com.project.util.DatabaseUtil;
@@ -233,8 +234,9 @@ public class WishlistPanel extends JPanel {
         comicPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                Comic detailedComic = getDetailedComic(comic);
                 UiMain parentFrame = (UiMain) SwingUtilities.getWindowAncestor(WishlistPanel.this);
-                parentFrame.displayComicDetails(comic, "Wishlist");
+                parentFrame.displayComicDetails(detailedComic, "Wishlist");
             }
         });
 
@@ -247,5 +249,14 @@ public class WishlistPanel extends JPanel {
         comicPanel.add(coverLabel, BorderLayout.CENTER);
         comicPanel.add(titleLabel, BorderLayout.SOUTH);
         comicsGridPanel.add(comicPanel);
+    }
+
+    private Comic getDetailedComic(Comic basicComic) {
+        SearchController searchController = new SearchController();
+        Comic detailedComic = searchController.getComicDetails(basicComic.getId());
+        if (detailedComic != null) {
+            return detailedComic;
+        }
+        return basicComic; // Fallback to basic comic if details fetch fails
     }
 }
