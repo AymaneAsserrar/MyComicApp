@@ -14,6 +14,50 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The UiMain class represents the main user interface for the comic application.
+ * It extends JFrame and provides various panels for displaying recommendations,
+ * search results, comic details, library, wishlist, and read list.
+ * 
+ * <p>This class sets up the main window, initializes the panels, and handles
+ * navigation between different sections of the application. It also manages
+ * user login and profile updates.</p>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>FlatLaf theme setup</li>
+ *   <li>Home logo and profile icon loading</li>
+ *   <li>Header panel with navigation and search field</li>
+ *   <li>CardLayout for switching between panels</li>
+ *   <li>Methods for displaying different panels and updating profile</li>
+ *   <li>User login listener interface</li>
+ * </ul>
+ * 
+ * <p>Usage:</p>
+ * <pre>
+ * {@code
+ * UiMain uiMain = new UiMain();
+ * uiMain.setVisible(true);
+ * }
+ * </pre>
+ * 
+ * <p>Dependencies:</p>
+ * <ul>
+ *   <li>FlatDarkLaf</li>
+ *   <li>CustomSearchField</li>
+ *   <li>RecommendationPanel</li>
+ *   <li>SearchResultsPanel</li>
+ *   <li>ComicDetailsPanel</li>
+ *   <li>LibraryPanel</li>
+ *   <li>WishlistPanel</li>
+ *   <li>ReadListPanel</li>
+ *   <li>LoginForm</li>
+ *   <li>HeroProfilePanel</li>
+ * </ul>
+ * 
+ * <p>Author: Your Name</p>
+ * <p>Version: 1.0</p>
+ */
 public class UiMain extends JFrame {
     private static final long serialVersionUID = 2008701708169261499L;
     private String currentUserEmail;

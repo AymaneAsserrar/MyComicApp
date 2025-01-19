@@ -6,6 +6,14 @@ import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 
 public class EmailUtil {
+    /**
+     * Sends an email with the specified subject and content to the given recipient.
+     *
+     * @param to the recipient's email address
+     * @param subject the subject of the email
+     * @param content the content of the email
+     * @throws RuntimeException if there is an error sending the email
+     */
     public static void sendEmail(String to, String subject, String content) {
         final String username = "archivage2203@gmail.com";
         final String password = "pwfs ohdy jhmx xvxx";

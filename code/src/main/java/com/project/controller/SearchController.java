@@ -18,6 +18,14 @@ public class SearchController {
         this.api = new API();
     }
 
+    /**
+     * Searches for comics by their title using the provided API and returns a paginated result.
+     *
+     * @param title the title of the comic to search for
+     * @param page the page number to retrieve (not currently used in the implementation)
+     * @param limit the number of results per page (not currently used in the implementation)
+     * @return a SearchResult object containing a list of comics and the total number of results
+     */
     public SearchResult searchComicsByTitle(String title, int page, int limit) {
         String jsonResponse = api.searchComicsByTitle(title);
         if (jsonResponse == null) {
@@ -66,6 +74,21 @@ public class SearchController {
         return new SearchResult(comicsList, totalResults);
     }
 
+    /**
+     * Searches for characters by their name using an external API and returns the search results.
+     *
+     * @param name The name of the character to search for.
+     * @return A SearchResult object containing a list of Hero objects and the total number of results.
+     *
+     * The method performs the following steps:
+     * 1. Fetches character data from an external API using the provided name.
+     * 2. Parses the JSON response to extract character information.
+     * 3. Limits the results to a maximum of 12 characters.
+     * 4. For each character, extracts and sets the ID, name, image URL, and description.
+     * 5. If any field is missing or null, sets default values (e.g., "Unknown Character" for name, 
+     *    "https://via.placeholder.com/150" for image URL, and "No description available." for description).
+     * 6. Returns a SearchResult object containing the list of Hero objects and the total number of results.
+     */
     public SearchResult searchCharactersByName(String name) {
         String jsonResponse = api.fetchCharacterData(name);
         if (jsonResponse == null) {

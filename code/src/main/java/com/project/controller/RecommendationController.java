@@ -21,6 +21,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * The RecommendationController class provides methods to interact with the comic recommendation API.
+ * It includes functionalities to get comic details, popular comics, comics by genres, comics from the same volume,
+ * and recommended comics based on user preferences.
+ */
 public class RecommendationController {
     private API api;
 
@@ -44,6 +49,13 @@ public class RecommendationController {
 
     // Méthode pour obtenir la liste des recommandations de comics populaires avec
     // une limite configurable
+    /**
+     * Retrieves a list of popular comics from the API.
+     *
+     * @param offset the starting point for the list of comics to retrieve
+     * @param limit the maximum number of comics to retrieve
+     * @return a list of popular comics; if the API response is null, returns an empty list
+     */
     public List<Comic> getPopularComics(int offset, int limit) {
         String jsonResponse = api.getPopularComics(offset, limit);
         if (jsonResponse == null) {
