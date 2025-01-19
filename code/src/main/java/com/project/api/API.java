@@ -25,20 +25,39 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+/**
+ * The API class provides methods to interact with the ComicVine API.
+ * It includes methods to fetch popular comics, comic descriptions, comic
+ * details,
+ * search comics by title, fetch character data, and search comics by genres.
+ */
 public class API {
 	private static final String BASE_URL = "https://comicvine.gamespot.com/api/";
-    private final APIKeyManager keyManager;
-    private static OkHttpClient client;
+	private final APIKeyManager keyManager;
+	private static OkHttpClient client;
 
-    public API() {
-        this.keyManager = new APIKeyManager();
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .build();
-    }
+	public API() {
+		this.keyManager = new APIKeyManager();
+		HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+		logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+		client = new OkHttpClient.Builder()
+				.addInterceptor(logging)
+				.build();
+	}
 
+	/**
+	 * Fetches a list of popular comics from the API.
+	 * 
+	 * This method retrieves popular comics based on the specified offset and limit.
+	 * It first checks if the response is available in the cache. If not, it makes
+	 * an
+	 * API request to fetch the data. The response is then cached for future use.
+	 * 
+	 * @param offset the offset for pagination
+	 * @param limit  the maximum number of comics to retrieve
+	 * @return a JSON string containing the list of popular comics, or null if an
+	 *         error occurs
+	 */
 	public String getPopularComics(int offset, int limit) {
 		String cacheKey = "popularComics_" + offset + "_" + limit;
 		String cachedResponse = APICache.get(cacheKey);
@@ -49,7 +68,7 @@ public class API {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 				"date_added,date_last_updated,first_issue,last_issue," +
 				"publisher,start_year,character_credits,rating";
-	
+
 		String endpoint = "volumes/?api_key=" + keyManager.getCurrentKey("volumes")
 				+ "&format=json&sort=date_added:desc&offset=" + offset + "&limit=" + limit
 				+ "&field_list=" + fieldList;
@@ -121,6 +140,13 @@ public class API {
 		}
 	}
 
+	/**
+	 * Retrieves the details of a comic based on the provided comic ID.
+	 *
+	 * @param comicId The ID of the comic to retrieve details for.
+	 * @return A JSON string containing the details of the comic, or null if an
+	 *         error occurs.
+	 */
 	public String getComicDetails(int comicId) {
 		String fieldList = "id,name,description,deck,image,characters,count_of_issues," +
 				"date_added,date_last_updated,first_issue,last_issue," +
@@ -258,6 +284,13 @@ public class API {
 		return defaultValue;
 	}
 
+	/**
+	 * Searches for comics by their title.
+	 *
+	 * @param title The title of the comic to search for.
+	 * @return A JSON string containing the search results, or null if an error
+	 *         occurred.
+	 */
 	public String searchComicsByTitle(String title) {
 		String fieldList = "id,name,description,deck,image,person_credits," +
 				"character_credits,rating,concepts"; // Add concepts to fieldList
@@ -286,8 +319,15 @@ public class API {
 	}
 
 	// Méthode pour chercher des personnages
+	/**
+	 * Fetches character data from the API based on the provided character name.
+	 *
+	 * @param name the name of the character to search for
+	 * @return a JSON string containing the character data, or null if an error occurs
+	 */
 	public String fetchCharacterData(String name) {
-		String endpoint = "characters/?api_key=" + keyManager.getCurrentKey("characters") + "&format=json&limit=10&offset=0&filter=name:" + name;
+		String endpoint = "characters/?api_key=" + keyManager.getCurrentKey("characters")
+				+ "&format=json&limit=10&offset=0&filter=name:" + name;
 		String url = BASE_URL + endpoint;
 
 		Request request = new Request.Builder()
@@ -310,7 +350,8 @@ public class API {
 	}
 
 	public String fetchCharacterDetails(int characterId) {
-		String endpoint = "character/4005-" + characterId + "/?api_key=" + keyManager.getCurrentKey("character") + "&format=json";
+		String endpoint = "character/4005-" + characterId + "/?api_key=" + keyManager.getCurrentKey("character")
+				+ "&format=json";
 		String url = BASE_URL + endpoint;
 
 		Request request = new Request.Builder()
@@ -343,6 +384,24 @@ public class API {
 		return hero;
 	}
 
+	/**
+	 * Searches for comics by genre.
+	 *
+	 * @param genre the genre to search for
+	 * @param offset the offset for pagination
+	 * @param limit the maximum number of results to return
+	 * @return a list of comics that match the specified genre
+	 * @throws IOException if an I/O error occurs during the search
+	 *
+	 * This method performs the following steps:
+	 * 1. Fetches concept IDs for the specified genre.
+	 * 2. Fetches issue IDs associated with the concept IDs.
+	 * 3. Fetches comic details for the issue IDs and returns a list of comics.
+	 *
+	 * If no concepts are found for the specified genre, an empty list is returned.
+	 * The method uses a key manager to obtain API keys and makes HTTP requests to fetch data.
+	 * It parses the JSON responses to extract relevant information.
+	 */
 	public List<Comic> searchComicsByGenres(String genre, int offset, int limit) throws IOException {
 		// Step 1: Fetch Concepts (Genres)
 		List<Integer> conceptIds = fetchConceptIds(genre, 1);

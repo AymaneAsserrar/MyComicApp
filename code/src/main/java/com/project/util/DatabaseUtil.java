@@ -8,6 +8,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.io.File;
 
+/**
+ * Utility class for handling database operations.
+ * This class provides methods to establish a connection to the SQLite database,
+ * create necessary tables, and insert test accounts.
+ */
 public class DatabaseUtil {
     private static final String DB_NAME = "comicApp.db";
     private static final String DB_URL;

@@ -69,6 +69,17 @@ Note: Screenshots show actual application interfaces and features in use.
     java -jar .\target\ComicAPP-1.0-SNAPSHOT.jar           
     ```
 
+## Documentation 
+
+1. ```sh
+     cd info4
+     cd code
+     mvn javadoc:javadoc
+     ```
+2. 
+ - IN target\site\apidocs.
+ - Find overview-summary.html and open it.
+
 ## Usage
 
 To start the application, simply run the `AppMain` file. The application will apply the modern FlatLaf look, create the necessary tables in the database, and launch the user interface.

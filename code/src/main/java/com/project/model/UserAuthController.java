@@ -13,6 +13,24 @@ import java.util.Base64;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The UserAuthController class provides methods for user authentication and password management.
+ * It includes functionalities for retrieving user information, validating credentials, creating users,
+ * initiating password reset, validating reset tokens, and updating user passwords.
+ * 
+ * <p>It uses a ConcurrentHashMap to store verification tokens and their expiration times for password reset functionality.
+ * The class interacts with a database to perform CRUD operations on user data.</p>
+ * 
+ * <p>Methods:</p>
+ * <ul>
+ *   <li>{@link #getUserByEmail(String)} - Retrieves user information by email from the database.</li>
+ *   <li>{@link #validateCredentials(String, String)} - Validates entered user email and password.</li>
+ *   <li>{@link #createUser(String, String)} - Creates a new user with the given email and password hash.</li>
+ *   <li>{@link #initiatePasswordReset(String)} - Initiates a password reset process by generating a reset token and sending it via email.</li>
+ *   <li>{@link #isResetTokenValid(String, String)} - Validates the reset token for the given email.</li>
+ *   <li>{@link #updateUserPassword(String, String)} - Updates the user's password in the database.</li>
+ * </ul>
+ */
 public class UserAuthController {
 
     // Hashmaps for storing verification tokens and their expiration times
